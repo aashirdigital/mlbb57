@@ -1,0 +1,37 @@
+{
+  "files": {
+    "main.css": "/static/css/main.920ffaa7.css",
+    "main.js": "/static/js/main.dc32a4cf.js",
+    "static/media/support.png": "/static/media/support.2821ab265c725c2ed06e.png",
+    "static/media/support2.png": "/static/media/support2.b0c416c5ebe0c240b396.png",
+    "static/media/banner2.jpeg": "/static/media/banner2.fed5944c0eed63e03038.jpeg",
+    "static/media/banner4.jpeg": "/static/media/banner4.46547c4acfa326f1fe48.jpeg",
+    "static/media/banner7.jpeg": "/static/media/banner7.c2a2b444ac5a4ad71f6d.jpeg",
+    "static/media/three.png": "/static/media/three.4cdd86907218e0e77dc9.png",
+    "static/media/one.png": "/static/media/one.2745d779d8b497f7da71.png",
+    "static/media/banner5.jpeg": "/static/media/banner5.1f00c89cc5c00439e9e8.jpeg",
+    "static/media/banner6.jpeg": "/static/media/banner6.a26616bd040273a77d17.jpeg",
+    "static/media/banner1.jpeg": "/static/media/banner1.3e4de5bc1d1289d99184.jpeg",
+    "static/media/banner3.jpeg": "/static/media/banner3.b8dc46d96e2a37a8782f.jpeg",
+    "static/media/two.png": "/static/media/two.e1db59de4f3eed914a10.png",
+    "static/media/banner8.jpeg": "/static/media/banner8.c590aba3899c35a3f937.jpeg",
+    "static/media/banner9.jpeg": "/static/media/banner9.146c367d97ffac521388.jpeg",
+    "static/media/logo.png": "/static/media/logo.c106ae7d33bd8057ebf1.png",
+    "static/media/phonepe.png": "/static/media/phonepe.fef1950d5608dec34e39.png",
+    "static/media/gpay.webp": "/static/media/gpay.9875f329544b1f1d81f0.webp",
+    "static/media/phonepe.webp": "/static/media/phonepe.bdad6bd16ad10909b69f.webp",
+    "static/media/upi.webp": "/static/media/upi.4239d0b35fd728ae798d.webp",
+    "index.html": "/index.html",
+    "static/media/paytm.webp": "/static/media/paytm.e82fa84d2785dc5e7169.webp",
+    "static/media/slick.svg": "/static/media/slick.2630a3e3eab21c607e21.svg",
+    "static/media/slick.eot": "/static/media/slick.a4e97f5a2a64f0ab1323.eot",
+    "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
+    "static/media/slick.woff": "/static/media/slick.295183786cd8a1389865.woff",
+    "main.920ffaa7.css.map": "/static/css/main.920ffaa7.css.map",
+    "main.dc32a4cf.js.map": "/static/js/main.dc32a4cf.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.920ffaa7.css",
+    "static/js/main.dc32a4cf.js"
+  ]
+}
