@@ -17,7 +17,7 @@ const getAllUserController = async (req, res) => {
   try {
     const allUser = await userModel.find({
       email: {
-        $nin: ["topupbuddy07@gmail.com", "aashirdigital@gmail.com"],
+        $nin: ["coinssups@gmail.com", "aashirdigital@gmail.com"],
       },
     });
     if (!allUser) {

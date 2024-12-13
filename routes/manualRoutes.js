@@ -85,7 +85,7 @@ router.post("/create", authMiddleware, async (req, res) => {
         customerName,
         customerEmail,
         customerNumber,
-        redirectUrl: `https://topupbuddy.com/api/manual/status`,
+        redirectUrl: `https://coinsup.in/api/manual/status`,
       }
     );
 
@@ -215,7 +215,7 @@ router.get("/status", async (req, res) => {
         const sub = "New Order Recieved";
         const msgg =
           "Hello Admin! You have received a new order. Kindly login to see your order.";
-        await sendMail("teamtopupbuddy@gmail.com", sub, "", msgg);
+        await sendMail("coinssups@gmail.com", sub, "", msgg);
 
         return res.redirect(`${process.env.BASE_URL}/user-dashboard`);
       } else {
@@ -395,7 +395,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
     const sub = "New Order Recieved";
     const msgg =
       "Hello Admin! You have received a new order. Kindly login to see your order.";
-    await sendMail("teamtopupbuddy@gmail.com", sub, "", msgg);
+    await sendMail("coinssups@gmail.com", sub, "", msgg);
 
     return res
       .status(200)

@@ -224,7 +224,7 @@ router.post("/create", authMiddleware, async (req, res) => {
         customerName,
         customerEmail,
         customerNumber,
-        redirectUrl: `https://topupbuddy.com/api/moogold/status`,
+        redirectUrl: `https://coinsup.in/api/moogold/status`,
       }
     );
 

@@ -178,7 +178,7 @@ router.post("/addmoney", authMiddleware, async (req, res) => {
         customerName,
         customerEmail,
         customerNumber,
-        redirectUrl: `https://topupbuddy.com/api/wallet/status`,
+        redirectUrl: `https://coinsup.in/api/wallet/status`,
       }
     );
     if (response.data && response.data.success) {

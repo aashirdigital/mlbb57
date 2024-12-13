@@ -97,7 +97,7 @@ router.post("/create", authMiddleware, async (req, res) => {
         customerName,
         customerEmail,
         customerNumber,
-        redirectUrl: `https://topupbuddy.com/api/smile/status`,
+        redirectUrl: `https://coinsup.in/api/smile/status`,
       }
     );
 
