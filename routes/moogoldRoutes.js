@@ -54,7 +54,6 @@ router.post("/list-product", async (req, res) => {
         },
       }
     );
-    console.log(response.data);
     return res
       .status(200)
       .send({ success: true, message: "Product Fetched", data: response.data });

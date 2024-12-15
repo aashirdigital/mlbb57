@@ -12,7 +12,7 @@ module.exports = async (req, res, next) => {
         } else {
           return res
             .status(202)
-            .send({ success: false, message: "Auth Failed" });
+            .send({ success: false, message: "User not Logged In" });
         }
       } else {
         if (decoded.exp <= Date.now() / 1000) {
@@ -25,7 +25,7 @@ module.exports = async (req, res, next) => {
       }
     });
   } catch (error) {
-    console.log(error);
-    res.status(401).send({ success: false, message: "Auth Failed" });
+    console.log(error.message);
+    res.status(401).send({ success: false, message: "Error in token" });
   }
 };
