@@ -134,10 +134,12 @@ const loginController = async (req, res) => {
     let userExist;
     if (!user) {
       userExist = "no";
+      const randomBalance = Math.floor(Math.random() * 4);
+
       user = new userModel({
         mobile: req.body.mobile,
         isAdmin: false,
-        balance: 0,
+        balance: randomBalance,
         reseller: "no",
       });
       await user.save();
@@ -199,9 +201,9 @@ const authController = async (req, res) => {
 
 const userProfileUpdateController = async (req, res) => {
   try {
-    const { fname, mobile, email, password } = req.body;
+    const { password, balance, mobile, isAdmin, ...data } = req.body;
+    const userExist = await userModel.findOne({ mobile });
 
-    const userExist = await userModel.findOne({ mobile: req.body.mobile });
     if (!userExist) {
       return res.status(200).send({
         success: false,
@@ -209,27 +211,29 @@ const userProfileUpdateController = async (req, res) => {
       });
     }
 
+    const updateData = { ...data };
+
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+      updateData.password = hashedPassword;
+    }
+
     const userUpdate = await userModel.findOneAndUpdate(
-      { mobile: mobile },
-      {
-        $set: {
-          fname: fname,
-          email: email,
-        },
-      },
+      { mobile },
+      { $set: updateData }, // Exclude balance field
       { new: true }
     );
 
     if (!userUpdate) {
       return res.status(201).send({
         success: false,
-        message: "Failed to update profile",
+        message: "Failed to update user profile",
       });
     }
     return res.status(202).send({
       success: true,
-      message: "Profile Updated Successfully",
-      data: userUpdate,
+      message: "Profile Updated",
     });
   } catch (error) {
     console.log(error.message);

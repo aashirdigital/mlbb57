@@ -202,7 +202,7 @@ router.get("/status", async (req, res) => {
       orderId: orderId,
     });
     if (existingPayment) {
-      return res.redirect(`${process.env.BASE_URL}/user-dashboard`);
+      return res.redirect(`${process.env.BASE_URL}/failure`);
     }
 
     const paymentResponse = await axios.post(

@@ -330,7 +330,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
       mobile: customer_mobile,
       balanceBefore: user?.balance,
       balanceAfter: newBalance,
-      amount: pack.price,
+      amount: productPrice,
       product: pack.amount,
       type: "order",
     });
@@ -340,6 +340,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
       api: api,
       amount: pack.amount,
       price: pack.price,
+      discountedPrice: productPrice,
       customer_email: customer_email,
       customer_mobile: customer_mobile,
       pname: pname,

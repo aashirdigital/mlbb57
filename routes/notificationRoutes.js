@@ -20,8 +20,10 @@ const upload = multer({ storage: storage });
 // routes
 router.post(
   "/update-noti",
-  browserMiddleware,
-  upload.single("image"),
+  upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "popupImage", maxCount: 1 },
+  ]),
   async (req, res) => {
     try {
       const existingNoti = await notificationModel.findOne({
@@ -33,16 +35,23 @@ router.post(
           .send({ success: false, message: "No Notification Found" });
       }
       let imagePath;
-      if (req.file) {
-        imagePath = req.file.path;
+      let imagePathTwo;
+
+      if (req.files && req.files.image && req.files.image[0]) {
+        imagePath = req.files.image[0].path;
       }
+      if (req.files && req.files.popupImage && req.files.popupImage[0]) {
+        imagePathTwo = req.files.popupImage[0].path;
+      }
+
       const noti = await notificationModel.findOneAndUpdate(
         {
           _id: "662a60404ee7482cbd969a25",
         },
         {
           $set: {
-            image: req.file ? imagePath : existingNoti.image,
+            image: req.files ? imagePath : existingNoti.image,
+            popupImage: req.files ? imagePathTwo : existingNoti.popupImage,
             link: req.body.link,
             display: req.body.display,
             desc: req.body.desc,

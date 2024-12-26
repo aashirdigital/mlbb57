@@ -29,6 +29,7 @@
     "react-avatar-editor": "^13.0.2",
     "react-chartjs-2": "^5.2.0",
     "react-compare-slider": "^3.0.1",
+    "react-device-detect": "^2.2.3",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.2.3",
     "react-fast-marquee": "^1.6.2",

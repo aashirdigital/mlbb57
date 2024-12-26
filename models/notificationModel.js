@@ -4,6 +4,9 @@ const notificationSchema = new mongoose.Schema({
   image: {
     type: String,
   },
+  popupImage: {
+    type: String,
+  },
   link: {
     type: String,
   },

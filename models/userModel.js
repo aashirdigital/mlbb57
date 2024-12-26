@@ -18,6 +18,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       unique: true,
     },
+    gender: {
+      type: String,
+    },
+    state: {
+      type: String,
+    },
     balance: {
       type: Number,
       default: 0,

@@ -12,18 +12,23 @@ const querystring = require("querystring");
 const fs = require("fs");
 const nodemailer = require("nodemailer");
 const router = express.Router();
+const cron = require("node-cron");
 
-async function updateStatus(orderId) {
+async function updatePendingOrdersToFailed() {
   try {
-    const updateOrder = await orderModel.findOne(
-      { orderId: orderId },
-      { $set: { status: "failed" } },
-      { new: true }
+    const result = await orderModel.updateMany(
+      { status: "pending", api: "yes" }, // Filter: Only orders with status 'pending' and api 'yes'
+      { $set: { status: "failed" } }, // Update: Set status to 'failed'
+      { new: true } // Option: Return updated documents
     );
+    console.log(`Updated ${result.modifiedCount} orders to 'failed' status.`);
   } catch (error) {
-    console.log(error);
+    console.error("Error updating orders:", error);
   }
 }
+
+cron.schedule("*/10 * * * *", updatePendingOrdersToFailed);
+// setInterval(updatePendingOrdersToFailed, 5 * 1000);
 
 // barcode
 router.post("/create", authMiddleware, async (req, res) => {
@@ -388,7 +393,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
       mobile: customerMobile,
       balanceBefore: user?.balance,
       balanceAfter: newBalance,
-      amount: pack.price,
+      amount: productPrice,
       product: pack.amount,
       type: "order",
     });
@@ -447,6 +452,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
         orderId: orderId,
         pname: productName,
         price: pack.price,
+        discountedPrice: productPrice,
         amount: pack.amount,
         customer_email: customerEmail,
         customer_mobile: customerMobile,
@@ -506,6 +512,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
         orderId: orderId,
         pname: productName,
         price: pack.price,
+        discountedPrice: productPrice,
         amount: pack.amount,
         customer_email: customerEmail,
         customer_mobile: customerMobile,

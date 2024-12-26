@@ -18,6 +18,9 @@ const orderSchema = new mongoose.Schema(
     price: {
       type: String,
     },
+    discountedPrice: {
+      type: String,
+    },
     customer_email: {
       type: String,
     },

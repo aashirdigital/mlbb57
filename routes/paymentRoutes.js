@@ -52,63 +52,146 @@ router.post("/get-user-payments", authMiddleware, async (req, res) => {
 // get role
 router.post("/get-role", browserMiddleware, async (req, res) => {
   try {
-    const { userid, zoneid, productid, region } = req.body;
-    const uid = process.env.UID;
-    const email = process.env.EMAIL;
-    const product = "mobilelegends";
-    const time = Math.floor(Date.now() / 1000);
-    const mKey = process.env.KEY;
+    const { userid, zoneid, apiName, gameName } = req.body;
 
-    // GENERATING SIGN
-    const signArr = {
-      uid,
-      email,
-      product,
-      time,
-      userid,
-      zoneid,
-      productid,
-    };
-    const sortedSignArr = Object.fromEntries(Object.entries(signArr).sort());
-    const str =
-      Object.keys(sortedSignArr)
-        .map((key) => `${key}=${sortedSignArr[key]}`)
-        .join("&") +
-      "&" +
-      mKey;
-    const sign = md5(md5(str));
+    let response;
+    if (apiName === "smileOne") {
+      const uid = process.env.UID;
+      const email = process.env.EMAIL;
+      const product = "mobilelegends";
+      const time = Math.floor(Date.now() / 1000);
+      const mKey = process.env.KEY;
 
-    const formData = querystring.stringify({
-      email,
-      uid,
-      userid,
-      zoneid,
-      product,
-      productid,
-      time,
-      sign,
-    });
-    let apiUrl =
-      region === "brazil"
-        ? "https://www.smile.one/br/smilecoin/api/getrole"
-        : "https://www.smile.one/ph/smilecoin/api/getrole";
-    let role;
-    role = await axios.post(apiUrl, formData, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    });
-    if (role.data.status === 200) {
-      return res.status(200).send({
-        success: true,
-        username: role.data.username,
-        zone: role.data.zone,
-        message: role.data.message,
+      const productid = "212";
+      const region = "philliphines";
+
+      // GENERATING SIGN
+      const signArr = {
+        uid,
+        email,
+        product,
+        time,
+        userid,
+        zoneid,
+        productid,
+      };
+      const sortedSignArr = Object.fromEntries(Object.entries(signArr).sort());
+      const str =
+        Object.keys(sortedSignArr)
+          .map((key) => `${key}=${sortedSignArr[key]}`)
+          .join("&") +
+        "&" +
+        mKey;
+      const sign = md5(md5(str));
+      const formData = querystring.stringify({
+        email,
+        uid,
+        userid,
+        zoneid,
+        product,
+        productid,
+        time,
+        sign,
       });
-    } else {
-      return res
-        .status(201)
-        .send({ success: false, message: role.data.message });
+
+      let apiUrl =
+        region === "brazil"
+          ? "https://www.smile.one/br/smilecoin/api/getrole"
+          : "https://www.smile.one/ph/smilecoin/api/getrole";
+      response = await axios.post(apiUrl, formData, {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      });
+      if (response.data.status === 200) {
+        return res.status(200).send({
+          success: true,
+          username: response.data.username,
+          zone: response.data.zone,
+          message: response.data.message,
+          use: response.data.use,
+          apiName: "sm",
+        });
+      } else {
+        return res
+          .status(200)
+          .send({ success: false, message: response.data.message });
+      }
+    } else if (apiName === "moogold") {
+      //? GETTING FIELDS
+      const fieldsPayload = {
+        path: "product/product_detail",
+        product_id: gameName,
+      };
+
+      const timestamp = Math.floor(Date.now() / 1000);
+      const path = "product/product_detail";
+      const authSignature = generateAuthSignature(
+        fieldsPayload,
+        timestamp,
+        path
+      );
+
+      const moogold = await axios.post(
+        "https://moogold.com/wp-json/v1/api/product/product_detail",
+        fieldsPayload,
+        {
+          headers: {
+            Authorization: generateBasicAuthHeader(),
+            auth: authSignature,
+            timestamp: timestamp,
+          },
+        }
+      );
+
+      //! CREATE ORDER MOOGOLD
+      const payload = {
+        path: "product/validate",
+        data: {
+          "product-id": gameName,
+        },
+      };
+
+      moogold.data.fields?.forEach((field, index) => {
+        if (index === 0) {
+          payload.data[field] = userid;
+        } else if (index === 1) {
+          payload.data[field] = zoneid;
+        }
+      });
+
+      console.log(payload);
+
+      const timestampp = Math.floor(Date.now() / 1000);
+      const pathh = "product/validate";
+
+      const authSignaturee = generateAuthSignature(payload, timestampp, pathh);
+
+      try {
+        response = await axios.post(
+          "https://moogold.com/wp-json/v1/api/product/validate",
+          payload,
+          {
+            headers: {
+              Authorization: generateBasicAuthHeader(),
+              auth: authSignaturee,
+              timestamp: timestampp,
+            },
+          }
+        );
+
+        console.log(response);
+        return res.status(200).send({
+          success: true,
+          message: "Product Validated",
+          data: response.data,
+          username: response.data.username,
+          apiName: "mg",
+        });
+      } catch (error) {
+        console.log(error.message);
+      }
+    } else if (apiName === "yokcash") {
     }
   } catch (error) {
     return res.status(500).send({ success: false, message: error.message });
