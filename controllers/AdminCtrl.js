@@ -7,6 +7,7 @@ const websiteModel = require("../models/websiteModel");
 const contactModel = require("../models/contactModel");
 const productModel = require("../models/productModel");
 const walletHistoryModel = require("../models/walletHistoryModel");
+const registerWalletModel = require("../models/registerWalletModel");
 const md5 = require("md5");
 const querystring = require("querystring");
 const crypto = require("crypto");
@@ -443,6 +444,20 @@ const AdminDashboardController = async (req, res) => {
     // Set the end date to the end of the specified day
     to.setHours(23, 59, 59, 999);
 
+    // calculating register wallet balance
+
+    const registerWalletBalance = await registerWalletModel.find({
+      createdAt: {
+        $gte: from,
+        $lte: to,
+      },
+    });
+
+    const totalRegisterBalance = registerWalletBalance.reduce((total, item) => {
+      const balance = parseFloat(item.amount) || 0;
+      return total + balance;
+    }, 0);
+
     // Fetch orders within the date range
     const orders = await orderModel.find({
       createdAt: {
@@ -591,6 +606,7 @@ const AdminDashboardController = async (req, res) => {
       monthlyOrders: { labels, data },
       monthlySales: { salesLabels, salesData },
       totalUserBalance,
+      totalRegisterBalance,
     });
   } catch (error) {
     console.error(error);

@@ -2,6 +2,7 @@ const userModel = require("../models/userModel");
 const orderModel = require("../models/orderModel");
 const axios = require("axios");
 const subscribeModel = require("../models/subcribeModel");
+const registerWalletModel = require("../models/registerWalletModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const sendMail = require("./sendMail");
@@ -135,7 +136,7 @@ const loginController = async (req, res) => {
     if (!user) {
       userExist = "no";
       const randomBalance = Math.floor(Math.random() * 4);
-
+      // saving user
       user = new userModel({
         mobile: req.body.mobile,
         isAdmin: false,
@@ -143,6 +144,12 @@ const loginController = async (req, res) => {
         reseller: "no",
       });
       await user.save();
+      // saving register wallet history
+      const newHistory = new registerWalletModel({
+        mobile: req.body.mobile,
+        amount: randomBalance,
+      });
+      await newHistory.save();
     } else {
       userExist = "yes";
     }

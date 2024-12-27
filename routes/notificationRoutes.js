@@ -52,6 +52,7 @@ router.post(
           $set: {
             image: req.files ? imagePath : existingNoti.image,
             popupImage: req.files ? imagePathTwo : existingNoti.popupImage,
+            popupImageStatus: req.body.popupImageStatus,
             link: req.body.link,
             display: req.body.display,
             desc: req.body.desc,
