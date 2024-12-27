@@ -156,7 +156,7 @@ router.post("/get-role", browserMiddleware, async (req, res) => {
         }
       );
 
-      console.log(moogold);
+      console.log(moogold.data);
 
       //! CREATE ORDER MOOGOLD
       const payload = {
