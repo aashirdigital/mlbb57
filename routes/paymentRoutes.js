@@ -192,14 +192,22 @@ router.post("/get-role", browserMiddleware, async (req, res) => {
           }
         );
 
-        console.log(response);
-        return res.status(200).send({
-          success: true,
-          message: "Product Validated",
-          data: response.data,
-          username: response.data.username,
-          apiName: "mg",
-        });
+        if (response.data.status) {
+          return res.status(200).send({
+            success: true,
+            message: "Product Validated",
+            data: response.data,
+            username: response.data.username,
+            apiName: "mg",
+          });
+        } else {
+          return res.status(200).send({
+            success: false,
+            message: "Product Validation Failed",
+            data: response.data,
+            apiName: "mg",
+          });
+        }
       } catch (error) {
         console.log(error.message);
       }
