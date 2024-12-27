@@ -192,6 +192,8 @@ router.post("/get-role", browserMiddleware, async (req, res) => {
           }
         );
 
+        console.log(response.data);
+
         if (response.data.status) {
           return res.status(200).send({
             success: true,
