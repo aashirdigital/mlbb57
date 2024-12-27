@@ -6,9 +6,19 @@ const querystring = require("querystring");
 const browserMiddleware = require("../middlewares/browserMiddleware");
 const authMiddleware = require("../middlewares/authMiddleware");
 const adminAuthMiddleware = require("../middlewares/adminAuthMiddleware");
-
-// Create an Express Router
 const router = express.Router();
+
+const generateBasicAuthHeader = () => {
+  const credentials = `${process.env.MOOGOLD_PARTNER_ID}:${process.env.MOOGOLD_SECRET}`;
+  return `Basic ${base64.encode(credentials)}`;
+};
+const generateAuthSignature = (payload, timestamp, path) => {
+  const stringToSign = `${JSON.stringify(payload)}${timestamp}${path}`;
+  return crypto
+    .createHmac("sha256", process.env.MOOGOLD_SECRET)
+    .update(stringToSign)
+    .digest("hex");
+};
 
 router.get("/get-all-payments", adminAuthMiddleware, async (req, res) => {
   try {
