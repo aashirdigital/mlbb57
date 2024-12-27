@@ -156,6 +156,8 @@ router.post("/get-role", browserMiddleware, async (req, res) => {
         }
       );
 
+      console.log(moogold);
+
       //! CREATE ORDER MOOGOLD
       const payload = {
         path: "product/validate",
@@ -176,7 +178,6 @@ router.post("/get-role", browserMiddleware, async (req, res) => {
 
       const timestampp = Math.floor(Date.now() / 1000);
       const pathh = "product/validate";
-
       const authSignaturee = generateAuthSignature(payload, timestampp, pathh);
 
       try {
@@ -193,7 +194,6 @@ router.post("/get-role", browserMiddleware, async (req, res) => {
         );
 
         console.log(response.data);
-
         if (response.data.status) {
           return res.status(200).send({
             success: true,
@@ -203,7 +203,7 @@ router.post("/get-role", browserMiddleware, async (req, res) => {
             apiName: "mg",
           });
         } else {
-          return res.status(200).send({
+          return res.status(201).send({
             success: false,
             message: "Product Validation Failed",
             data: response.data,
