@@ -7,6 +7,8 @@ const browserMiddleware = require("../middlewares/browserMiddleware");
 const authMiddleware = require("../middlewares/authMiddleware");
 const adminAuthMiddleware = require("../middlewares/adminAuthMiddleware");
 const router = express.Router();
+const crypto = require("crypto");
+const base64 = require("base-64");
 
 const generateBasicAuthHeader = () => {
   const credentials = `${process.env.MOOGOLD_PARTNER_ID}:${process.env.MOOGOLD_SECRET}`;
