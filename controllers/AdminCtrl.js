@@ -492,6 +492,7 @@ const AdminDashboardController = async (req, res) => {
             $gte: from,
             $lte: to,
           },
+          status: "success",
         },
       },
       {
