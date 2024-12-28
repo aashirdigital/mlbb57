@@ -44,20 +44,8 @@ router.post(
 router.get("/get-all-products", browserMiddleware, getAllProductsController);
 router.post("/get-product", browserMiddleware, getProductController);
 router.post("/delete-product", adminAuthMiddleware, deleteProductController);
-router.post(
-  "/product-by-category",
-  browserMiddleware,
-  getProductByCategoryController
-);
-router.post(
-  "/get-product-by-name",
-  browserMiddleware,
-  getProductByNameController
-);
-router.post(
-  "/get-mobile-legend",
-  browserMiddleware,
-  getMobileLegendGameController
-);
+router.post("/product-by-category", getProductByCategoryController);
+router.post("/get-product-by-name", getProductByNameController);
+router.post("/get-mobile-legend", getMobileLegendGameController);
 
 module.exports = router;

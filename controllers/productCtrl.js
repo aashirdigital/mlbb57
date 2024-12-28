@@ -22,6 +22,7 @@ const addProductController = async (req, res) => {
       descTwo,
       stock,
       playerCheckBtn,
+      checkRole,
     } = req.body;
     // Parse the cost field as JSON
     const parsedCost = JSON.parse(cost);
@@ -49,6 +50,7 @@ const addProductController = async (req, res) => {
       playerCheckBtn,
       cost: parsedCost,
       image: req.file.path,
+      checkRole,
     });
     await product.save();
 
@@ -82,6 +84,7 @@ const updateProductController = async (req, res) => {
       region,
       cost,
       playerCheckBtn,
+      checkRole,
     } = req.body;
 
     const product = await productModel.findOne({ _id: id });
@@ -106,6 +109,7 @@ const updateProductController = async (req, res) => {
       tagOne,
       tagTwo,
       playerCheckBtn,
+      checkRole,
     };
 
     if (req.file) {

@@ -64,18 +64,15 @@ router.post("/get-user-payments", authMiddleware, async (req, res) => {
 // get role
 router.post("/get-role", browserMiddleware, async (req, res) => {
   try {
-    const { userid, zoneid, apiName, gameName } = req.body;
+    const { userid, zoneid, checkrole, gameName, productid, region } = req.body;
 
     let response;
-    if (apiName === "smileOne") {
+    if (checkrole === "0") {
       const uid = process.env.UID;
       const email = process.env.EMAIL;
       const product = "mobilelegends";
       const time = Math.floor(Date.now() / 1000);
       const mKey = process.env.KEY;
-
-      const productid = "212";
-      const region = "philliphines";
 
       // GENERATING SIGN
       const signArr = {
@@ -129,7 +126,7 @@ router.post("/get-role", browserMiddleware, async (req, res) => {
           .status(200)
           .send({ success: false, message: response.data.message });
       }
-    } else if (apiName === "moogold") {
+    } else if (checkrole === "1") {
       //? GETTING FIELDS
       const fieldsPayload = {
         path: "product/product_detail",
@@ -213,7 +210,7 @@ router.post("/get-role", browserMiddleware, async (req, res) => {
       } catch (error) {
         console.log(error.message);
       }
-    } else if (apiName === "yokcash") {
+    } else if (checkrole === "2") {
     }
   } catch (error) {
     return res.status(500).send({ success: false, message: error.message });

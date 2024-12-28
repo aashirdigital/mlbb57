@@ -57,6 +57,9 @@ const productSchema = new mongoose.Schema({
   playerCheckBtn: {
     type: String,
   },
+  checkRole: {
+    type: String,
+  },
   isDeleted: {
     type: Boolean,
     default: false,
