@@ -6,6 +6,7 @@ const userModel = require("../models/userModel");
 const paymentModel = require("../models/paymentModeModel");
 const walletHistoryModel = require("../models/walletHistoryModel");
 const walletDiscountModel = require("../models/walletDiscountModel");
+const errModel = require("../models/errModel");
 const authMiddleware = require("../middlewares/authMiddleware");
 const sendMail = require("../controllers/sendMail");
 const fs = require("fs");
@@ -225,6 +226,15 @@ router.get("/status", async (req, res) => {
           { $set: { status: "failed" } },
           { new: true }
         );
+
+        // saving error
+        const err = new errModel({
+          orderId: orderId,
+          error: paymentResponse.data,
+          message: paymentResponse.data,
+        });
+        await err.save();
+
         return res.redirect(`${process.env.BASE_URL}/failure`);
       }
     }

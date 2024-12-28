@@ -7,6 +7,7 @@ const orderModel = require("../models/orderModel");
 const userModel = require("../models/userModel");
 const walletHistoryModel = require("../models/walletHistoryModel");
 const walletDiscountModel = require("../models/walletDiscountModel");
+const errModel = require("../models/errModel");
 const fs = require("fs");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
@@ -252,8 +253,6 @@ router.get("/status", async (req, res) => {
       return res.redirect(`${process.env.BASE_URL}/failure`);
     }
 
-    console.log("No duplicate");
-
     const paymentResponse = await axios.post(
       "https://pay.onegateway.in/payment/status",
       {
@@ -261,8 +260,6 @@ router.get("/status", async (req, res) => {
         orderId: orderId,
       }
     );
-
-    console.log(paymentResponse.data);
 
     if (paymentResponse.data.success) {
       const data = paymentResponse.data.data;
@@ -291,15 +288,11 @@ router.get("/status", async (req, res) => {
         const newPayment = new paymentModel(paymentObject);
         await newPayment.save();
 
-        console.log("payment saved");
-
         // searching order
         const order = await orderModel.findOne({ orderId: orderId });
         if (!order) {
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
-
-        console.log(order);
 
         // searching product
         const prod = await productModel.findOne({ name: order.pname });
@@ -307,15 +300,11 @@ router.get("/status", async (req, res) => {
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
 
-        console.log(prod);
-
         // searching pack
         const pack = prod.cost.filter(
           (item) => item.prodId === order.prodId
         )[0];
         const productid = pack.id;
-
-        console.log(pack);
 
         // GETTING PAYLOAD STARTS
         const fieldsPayload = {
@@ -343,8 +332,6 @@ router.get("/status", async (req, res) => {
           }
         );
 
-        console.log(moogold.data);
-
         if (moogold.data.err_code) {
           // updating order status
           const updateOrder = await orderModel.findOneAndUpdate(
@@ -352,6 +339,13 @@ router.get("/status", async (req, res) => {
             { $set: { status: "failed" } },
             { new: true }
           );
+
+          const err = new errModel({
+            orderId: orderId,
+            error: moogold.data.err_code,
+            message: moogold.data.err_message,
+          });
+          await err.save();
 
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
@@ -404,13 +398,20 @@ router.get("/status", async (req, res) => {
             { new: true }
           );
 
+          const err = new errModel({
+            orderId: orderId,
+            error: response.data.err_code,
+            message: response.data.err_message,
+          });
+          await err.save();
+
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
 
         // updating order status
         const updateOrder = await orderModel.findOneAndUpdate(
           { orderId: orderId },
-          { $set: { status: "success" } },
+          { $set: { status: "success", mid: response.data.order_id } },
           { new: true }
         );
 
@@ -588,10 +589,10 @@ router.post("/wallet", authMiddleware, async (req, res) => {
       const order = new orderModel({
         orderId: orderId,
         api: "yes",
+        pname: productName,
         amount: pack.amount,
         price: pack.price,
         discountedPrice: productPrice,
-        p_info: productName,
         customer_email: customerEmail,
         customer_mobile: customerNumber,
         userId: userid,
@@ -602,6 +603,13 @@ router.post("/wallet", authMiddleware, async (req, res) => {
         apiName: "moogold",
       });
       await order.save();
+
+      const err = new errModel({
+        orderId: orderId,
+        error: moogold.data.err_code,
+        message: moogold.data.err_message,
+      });
+      await err.save();
 
       console.log(moogold.data);
 
@@ -666,6 +674,13 @@ router.post("/wallet", authMiddleware, async (req, res) => {
       });
       await order.save();
 
+      const err = new errModel({
+        orderId: orderId,
+        error: response.data.err_code,
+        message: response.data.err_message,
+      });
+      await err.save();
+
       console.log(response.data);
 
       return res.status(201).send({ success: false, message: "Order Failed" });
@@ -686,6 +701,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
       status: "success",
       paymentMode: "wallet",
       apiName: "moogold",
+      mid: response.data.order_id,
     });
     await order.save();
 

@@ -6,6 +6,7 @@ const orderModel = require("../models/orderModel");
 const userModel = require("../models/userModel");
 const walletDiscountModel = require("../models/walletDiscountModel");
 const walletHistoryModel = require("../models/walletHistoryModel");
+const errModel = require("../models/errModel");
 const authMiddleware = require("../middlewares/authMiddleware");
 const md5 = require("md5");
 const querystring = require("querystring");
@@ -241,7 +242,9 @@ router.get("/status", async (req, res) => {
           // updating order status
           const updateOrder = await orderModel.findOneAndUpdate(
             { orderId: orderId },
-            { $set: { status: "success" } },
+            {
+              $set: { status: "success", sid: orderResponse.data.order_id },
+            },
             { new: true }
           );
 
@@ -289,6 +292,13 @@ router.get("/status", async (req, res) => {
             { $set: { status: "failed" } },
             { new: true }
           );
+          // saving error
+          const err = new errModel({
+            orderId: orderId,
+            error: orderResponse.data.message,
+            message: orderResponse.data.message,
+          });
+          await err.save();
 
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
@@ -462,6 +472,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
         paymentMode: "wallet",
         apiName: "smileOne",
         status: "success",
+        sid: orderResponse.data.order_id,
       });
       await order.save();
 
@@ -524,6 +535,15 @@ router.post("/wallet", authMiddleware, async (req, res) => {
         status: "failed",
       });
       await order.save();
+
+      // saving error
+      const err = new errModel({
+        orderId: orderId,
+        error: orderResponse.data.message,
+        message: orderResponse.data.message,
+      });
+      await err.save();
+
       return res.status(400).send({ success: false, message: "Order Failed" });
     }
   } catch (error) {

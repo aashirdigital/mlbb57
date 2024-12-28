@@ -8,7 +8,7 @@ const router = express.Router();
 // GET
 router.post("/get-user-orders", authMiddleware, async (req, res) => {
   try {
-    const orders = await orderModel.find({ mobile: req.body.mobile });
+    const orders = await orderModel.find({ customer_mobile: req.body.mobile });
     if (orders.length === 0) {
       return res.status(200).send({
         success: false,
