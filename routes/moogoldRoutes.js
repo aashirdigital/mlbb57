@@ -252,6 +252,8 @@ router.get("/status", async (req, res) => {
       return res.redirect(`${process.env.BASE_URL}/failure`);
     }
 
+    console.log("No duplicate");
+
     const paymentResponse = await axios.post(
       "https://pay.onegateway.in/payment/status",
       {
@@ -259,6 +261,8 @@ router.get("/status", async (req, res) => {
         orderId: orderId,
       }
     );
+
+    console.log(paymentResponse.data);
 
     if (paymentResponse.data.success) {
       const data = paymentResponse.data.data;
@@ -287,11 +291,15 @@ router.get("/status", async (req, res) => {
         const newPayment = new paymentModel(paymentObject);
         await newPayment.save();
 
+        console.log("payment saved");
+
         // searching order
         const order = await orderModel.findOne({ orderId: orderId });
         if (!order) {
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
+
+        console.log(order);
 
         // searching product
         const prod = await productModel.findOne({ name: order.pname });
@@ -299,11 +307,15 @@ router.get("/status", async (req, res) => {
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
 
+        console.log(prod);
+
         // searching pack
         const pack = prod.cost.filter(
           (item) => item.prodId === order.prodId
         )[0];
         const productid = pack.id;
+
+        console.log(pack);
 
         // GETTING PAYLOAD STARTS
         const fieldsPayload = {

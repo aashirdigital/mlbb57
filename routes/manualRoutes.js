@@ -217,7 +217,7 @@ router.get("/status", async (req, res) => {
           "Hello Admin! You have received a new order. Kindly login to see your order.";
         await sendMail("coinssups@gmail.com", sub, "", msgg);
 
-        return res.redirect(`${process.env.BASE_URL}/user-dashboard`);
+        return res.redirect(`${process.env.BASE_URL}/success`);
       } else {
         const { orderId } = data;
         const updateOrder = await orderModel.findOneAndUpdate(
@@ -348,7 +348,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
       zoneId: zoneid,
       orderId: orderId,
       originalPrice: pack.buyingprice,
-      status: "pending",
+      status: "processing",
       paymentMode: "wallet",
       apiName: "manual",
     });
