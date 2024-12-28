@@ -4,6 +4,7 @@ const notificationModel = require("../models/notificationModel");
 const path = require("path"); // Add this line to import the path module
 const fs = require("fs");
 const browserMiddleware = require("../middlewares/browserMiddleware");
+const adminAuthMiddleware = require("../middlewares/adminAuthMiddleware");
 // router object
 const router = express.Router();
 
@@ -20,6 +21,7 @@ const upload = multer({ storage: storage });
 // routes
 router.post(
   "/update-noti",
+  adminAuthMiddleware,
   upload.fields([
     { name: "image", maxCount: 1 },
     { name: "popupImage", maxCount: 1 },
@@ -74,7 +76,7 @@ router.post(
   }
 );
 
-router.get("/get-noti", browserMiddleware, async (req, res) => {
+router.get("/get-noti", async (req, res) => {
   try {
     const noti = await notificationModel.find({});
     if (noti.length === 0) {
@@ -92,7 +94,7 @@ router.get("/get-noti", browserMiddleware, async (req, res) => {
   }
 });
 
-router.post("/delete", browserMiddleware, async (req, res) => {
+router.post("/delete", adminAuthMiddleware, async (req, res) => {
   try {
     const image = await galleryModel.findOne({ _id: req.body.id });
     if (!image) {

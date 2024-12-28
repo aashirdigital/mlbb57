@@ -41,8 +41,8 @@ router.post(
   adminAuthMiddleware,
   updateProductController
 );
-router.get("/get-all-products", browserMiddleware, getAllProductsController);
-router.post("/get-product", browserMiddleware, getProductController);
+router.get("/get-all-products", getAllProductsController);
+router.post("/get-product", getProductController);
 router.post("/delete-product", adminAuthMiddleware, deleteProductController);
 router.post("/product-by-category", getProductByCategoryController);
 router.post("/get-product-by-name", getProductByNameController);

@@ -66,17 +66,17 @@ router.post("/delete-coupon", adminAuthMiddleware, deleteCouponController);
 router.post("/add-money", adminAuthMiddleware, adminAddMoneyController);
 router.get("/get-dashboard", adminAuthMiddleware, AdminDashboardController);
 // ============== BARCODE ORDER
-router.post(
-  "/verifySmileOrder",
-  adminAuthMiddleware,
-  verifySmileOrderController
-);
-router.post(
-  "/verifyMoogoldOrder",
-  adminAuthMiddleware,
-  verifyMoogoldOrderController
-);
-router.post("/rejectOrder", adminAuthMiddleware, rejectOrderController);
+// router.post(
+//   "/verifySmileOrder",
+//   adminAuthMiddleware,
+//   verifySmileOrderController
+// );
+// router.post(
+//   "/verifyMoogoldOrder",
+//   adminAuthMiddleware,
+//   verifyMoogoldOrderController
+// );
+// router.post("/rejectOrder", adminAuthMiddleware, rejectOrderController);
 // BALANCE
 router.get("/smile-balance", adminAuthMiddleware, smileBalanceController);
 router.get("/moogold-balance", adminAuthMiddleware, moogoldBalanceContoller);

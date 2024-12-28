@@ -2,10 +2,11 @@ const express = require("express");
 const authMiddleware = require("../middlewares/authMiddleware");
 const orderModel = require("../models/orderModel");
 const productModel = require("../models/productModel");
+const adminAuthMiddleware = require("../middlewares/adminAuthMiddleware");
 const router = express.Router();
 
 // ORDER SMILE
-router.post("/smile", authMiddleware, async (req, res) => {
+router.post("/smile", adminAuthMiddleware, async (req, res) => {
   try {
     const {
       orderId,

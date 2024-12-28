@@ -4,6 +4,7 @@ const galleryModel = require("../models/galleryModel");
 const path = require("path"); // Add this line to import the path module
 const fs = require("fs");
 const browserMiddleware = require("../middlewares/browserMiddleware");
+const adminAuthMiddleware = require("../middlewares/adminAuthMiddleware");
 // router object
 const router = express.Router();
 
@@ -20,7 +21,7 @@ const upload = multer({ storage: storage });
 // routes
 router.post(
   "/upload",
-  browserMiddleware,
+  adminAuthMiddleware,
   upload.single("image"),
   async (req, res) => {
     try {
@@ -42,7 +43,7 @@ router.post(
   }
 );
 
-router.get("/get-images", browserMiddleware, async (req, res) => {
+router.get("/get-images", async (req, res) => {
   try {
     const images = await galleryModel.find({});
     if (images.length === 0) {
@@ -58,7 +59,7 @@ router.get("/get-images", browserMiddleware, async (req, res) => {
   }
 });
 
-router.post("/delete", browserMiddleware, async (req, res) => {
+router.post("/delete", adminAuthMiddleware, async (req, res) => {
   try {
     const image = await galleryModel.findOne({ _id: req.body.id });
     if (!image) {

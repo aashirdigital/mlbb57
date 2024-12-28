@@ -2,12 +2,13 @@ const express = require("express");
 const contactModel = require("../models/contactModel");
 const userModel = require("../models/userModel");
 const browserMiddleware = require("../middlewares/browserMiddleware");
+const adminAuthMiddleware = require("../middlewares/adminAuthMiddleware");
 
 // router object
 const router = express.Router();
 
 // routes
-router.post("/add-contact-form", browserMiddleware, async (req, res) => {
+router.post("/add-contact-form", async (req, res) => {
   try {
     const user = await userModel.findOne({ email: req.body.email });
     if (!user) {
@@ -51,7 +52,7 @@ router.post("/get-user-query", browserMiddleware, async (req, res) => {
   }
 });
 
-router.post("/update-query", browserMiddleware, async (req, res) => {
+router.post("/update-query", adminAuthMiddleware, async (req, res) => {
   try {
     const query = await contactModel.findOne({ _id: req.body.id });
     if (!query) {

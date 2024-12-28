@@ -4,6 +4,7 @@ const router = express.Router();
 const userModel = require("../models/userModel");
 const fs = require("fs");
 const browserMiddleware = require("../middlewares/browserMiddleware");
+const adminAuthMiddleware = require("../middlewares/adminAuthMiddleware");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -19,7 +20,7 @@ const upload = multer({ storage: storage });
 // upload
 router.post(
   "/upload-image",
-  browserMiddleware,
+  adminAuthMiddleware,
   upload.array("images", 5),
   async (req, res) => {
     try {
@@ -56,7 +57,7 @@ router.post(
 
 // delete
 // Add a new route to handle image deletion
-router.delete("/delete-image", browserMiddleware, async (req, res) => {
+router.delete("/delete-image", adminAuthMiddleware, async (req, res) => {
   try {
     const { email, imagePath } = req.body;
     const user = await userModel.findOne({ email });

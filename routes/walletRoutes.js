@@ -79,7 +79,7 @@ router.post("/barcode", authMiddleware, async (req, res) => {
   }
 });
 // verify payment
-router.post("/verify", authMiddleware, async (req, res) => {
+router.post("/verify", adminAuthMiddleware, async (req, res) => {
   try {
     const { utr, email, orderId } = req.body;
     // checking user
@@ -310,7 +310,7 @@ router.get("/getdiscount", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-router.post("/discount", async (req, res) => {
+router.post("/discount", adminAuthMiddleware, async (req, res) => {
   try {
     const discount = await walletDiscountModel.findOne({});
     if (!discount) {
