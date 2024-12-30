@@ -154,7 +154,7 @@ const loginController = async (req, res) => {
       userExist = "yes";
     }
 
-    const isAdmin = user.isAdmin || false; // If isAdmin is undefined, default to false
+    const isAdmin = user.isAdmin || false;
 
     // Generate token based on user (new or existing)
     const token = jwt.sign({ id: user._id, isAdmin }, process.env.JWT_SECRET, {

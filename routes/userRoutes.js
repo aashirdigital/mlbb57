@@ -21,7 +21,7 @@ const router = express.Router();
 // routes
 router.post("/admin", adminController);
 router.post("/login", loginController);
-router.post("/register", registerController);
+// router.post("/register", registerController);
 router.post("/updateprofile", authMiddleware, userProfileUpdateController);
 router.post("/getUserData", authMiddleware, authController);
 router.post("/send-otp", sendMailController);

@@ -176,6 +176,12 @@ const adminUpdateOrderController = async (req, res) => {
     const order = await orderModel.findOne({
       orderId: req.body.orderId,
     });
+
+    if (req.body.status === "refunded") {
+      if (order.status !== "refunded") {
+        console.log(order);
+      }
+    }
     if (!order) {
       return res
         .status(200)
