@@ -18,9 +18,9 @@ const cron = require("node-cron");
 async function updatePendingOrdersToFailed() {
   try {
     const result = await orderModel.updateMany(
-      { status: "pending", api: "yes" }, // Filter: Only orders with status 'pending' and api 'yes'
-      { $set: { status: "failed" } }, // Update: Set status to 'failed'
-      { new: true } // Option: Return updated documents
+      { status: "pending", api: "yes", apiName: "smileOne" },
+      { $set: { status: "failed" } },
+      { new: true }
     );
     console.log(`Updated ${result.modifiedCount} orders to 'failed' status.`);
   } catch (error) {
@@ -378,7 +378,10 @@ router.post("/wallet", authMiddleware, async (req, res) => {
     }
 
     const productPrice = pack?.price - (pack?.price * wd) / 100;
-    const newBalance = Math.max(0, user?.balance - productPrice);
+    const newBalance = Math.max(
+      0,
+      parseFloat(user?.balance) - parseFloat(productPrice)
+    );
     const updateBalance = await userModel.findOneAndUpdate(
       {
         email: customerEmail,

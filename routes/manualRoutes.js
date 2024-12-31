@@ -315,7 +315,10 @@ router.post("/wallet", authMiddleware, async (req, res) => {
     }
 
     const productPrice = pack?.price - (pack?.price * wd) / 100;
-    const newBalance = Math.max(0, user?.balance - productPrice);
+    const newBalance = Math.max(
+      0,
+      parseFloat(user?.balance) - parseFloat(productPrice)
+    );
     const updateBalance = await userModel.findOneAndUpdate(
       {
         email: customer_email,

@@ -13,6 +13,7 @@ const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const authMiddleware = require("../middlewares/authMiddleware");
 const router = express.Router();
+const cron = require("node-cron");
 
 const generateBasicAuthHeader = () => {
   const credentials = `${process.env.MOOGOLD_PARTNER_ID}:${process.env.MOOGOLD_SECRET}`;
@@ -25,6 +26,152 @@ const generateAuthSignature = (payload, timestamp, path) => {
     .update(stringToSign)
     .digest("hex");
 };
+
+// REFUND FUNCTION
+// REFUND FUNCTION
+// REFUND FUNCTION
+const checkAndProcessRefunds = async () => {
+  try {
+    const orders = await orderModel.find({
+      status: "processing",
+      apiName: "moogold",
+    });
+
+    console.log(orders);
+
+    for (const order of orders) {
+      const payload = {
+        path: "order/order_detail",
+        order_id: order.mid,
+      };
+
+      // Generate authorization
+      const timestamp = Math.floor(Date.now() / 1000);
+      const path = "order/order_detail";
+      const authSignature = crypto
+        .createHmac("sha256", process.env.MOOGOLD_SECRET)
+        .update(`${JSON.stringify(payload)}${timestamp}${path}`)
+        .digest("hex");
+
+      try {
+        const response = await axios.post(
+          "https://moogold.com/wp-json/v1/api/order/order_detail",
+          payload,
+          {
+            headers: {
+              Authorization: generateBasicAuthHeader(),
+              auth: authSignature,
+              timestamp: timestamp,
+            },
+          }
+        );
+
+        console.log(response.data);
+
+        // Check the order status
+        const { order_status } = response.data;
+        if (order_status === "refunded") {
+          const user = await userModel.findOne({
+            mobile: order.customer_mobile,
+          });
+          if (user) {
+            const newBalance =
+              parseFloat(user.balance) + parseFloat(order.discountedPrice);
+            await userModel.findOneAndUpdate(
+              { mobile: order.customer_mobile },
+              { $set: { balance: newBalance } },
+              { new: true }
+            );
+
+            // Update order status to refunded
+            await orderModel.findOneAndUpdate(
+              { _id: order._id },
+              { $set: { status: "refunded" } }
+            );
+
+            // Save wallet history
+            const history = new walletHistoryModel({
+              orderId: order.orderId,
+              email: order.customer_email,
+              mobile: order.customer_mobile,
+              balanceBefore: user.balance,
+              balanceAfter: newBalance,
+              amount: order.discountedPrice,
+              product: order.pname,
+              type: "refund",
+            });
+            await history.save();
+          }
+        } else if (order_status === "completed") {
+          // Update order status to refunded
+          await orderModel.findOneAndUpdate(
+            { _id: order._id },
+            { $set: { status: "success" } }
+          );
+        }
+      } catch (err) {
+        console.error(
+          `Error fetching order details for ${order.orderId}:`,
+          err.message
+        );
+      }
+    }
+    console.log("Refund job completed.");
+  } catch (err) {
+    console.error("Error in refund job:", err.message);
+  }
+};
+
+// Schedule the job to run every 5 minutes
+checkAndProcessRefunds();
+// cron.schedule("*/5 * * * *", () => {});
+// REFUND FUNCTION
+// REFUND FUNCTION
+// REFUND FUNCTION
+
+// CALLBACK
+// CALLBACK
+// CALLBACK
+// router.post("/moogold/callback", async (req, res) => {
+//   try {
+//     const { status, message, account_details, order_id, total } = req.body;
+
+//     // Validate callback payload
+//     if (!order_id || !status) {
+//       return res
+//         .status(400)
+//         .send({ success: false, message: "Invalid callback payload" });
+//     }
+
+//     // Find the order using the `order_id`
+//     const order = await orderModel.findOne({ mid: order_id });
+//     if (!order) {
+//       return res
+//         .status(404)
+//         .send({ success: false, message: "Order not found" });
+//     }
+
+//     // Update the order status based on the callback
+//     order.status = status;
+//     order.callbackMessage = message;
+//     order.callbackAmount = total;
+//     await order.save();
+
+//     // Log the callback for debugging
+//     console.log("Callback received:", req.body);
+
+//     // Respond to the callback
+//     res
+//       .status(200)
+//       .send({ success: true, message: "Callback processed successfully" });
+//   } catch (error) {
+//     console.error("Error processing callback:", error);
+//     res.status(500).send({ success: false, message: "Server error" });
+//   }
+// });
+// CALLBACK
+// CALLBACK
+// CALLBACK
 
 router.post("/list-product", async (req, res) => {
   const categoryId = req.body.categoryId;
@@ -204,11 +351,11 @@ router.post("/create", authMiddleware, async (req, res) => {
       userId: userid,
       zoneId: zoneid,
       prodId: prodId,
-      originalPrice: pack.buyingprice,
       discount: discount,
+      originalPrice: pack.buyingprice,
       paymentMode: "onegateway",
       apiName: "moogold",
-      status: "pending",
+      status: "processing",
     });
     await order.save();
 
@@ -528,7 +675,10 @@ router.post("/wallet", authMiddleware, async (req, res) => {
     }
 
     const productPrice = pack?.price - (pack?.price * wd) / 100;
-    const newBalance = Math.max(0, user?.balance - productPrice);
+    const newBalance = Math.max(
+      0,
+      parseFloat(user?.balance) - parseFloat(productPrice)
+    );
     const updateBalance = await userModel.findOneAndUpdate(
       {
         email: customerEmail,
@@ -698,7 +848,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
       userId: userid,
       zoneId: zoneid,
       originalPrice: pack.buyingprice,
-      status: "success",
+      status: "processing",
       paymentMode: "wallet",
       apiName: "moogold",
       mid: response.data.order_id,

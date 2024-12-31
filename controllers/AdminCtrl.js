@@ -177,16 +177,46 @@ const adminUpdateOrderController = async (req, res) => {
       orderId: req.body.orderId,
     });
 
-    if (req.body.status === "refunded") {
-      if (order.status !== "refunded") {
-        console.log(order);
-      }
-    }
     if (!order) {
       return res
         .status(200)
         .send({ success: false, message: "No Order Found" });
     }
+
+    if (req.body.status === "refunded") {
+      if (order.status !== "refunded") {
+        const user = await userModel.findOne({
+          mobile: order.customer_mobile,
+        });
+        // updating balance
+        const newBalance = Math.max(
+          0,
+          parseFloat(user?.balance) + parseFloat(order?.price)
+        );
+        const updateBalance = await userModel.findOneAndUpdate(
+          {
+            mobile: order.customer_mobile,
+          },
+          { $set: { balance: newBalance } },
+          { new: true }
+        );
+        if (updateBalance) {
+          const history = new walletHistoryModel({
+            orderId: order.orderId,
+            email: order.customer_email,
+            mobile: order.customer_mobile,
+            balanceBefore: user?.balance,
+            balanceAfter: newBalance,
+            amount: order.price,
+            product: order.pname,
+            type: "refund",
+            admin: true,
+          });
+          await history.save();
+        }
+      }
+    }
+
     const updateOrder = await orderModel.findOneAndUpdate(
       {
         orderId: req.body.orderId,
