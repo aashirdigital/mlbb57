@@ -5,8 +5,8 @@ const sendSMS = async (phone, otp) => {
     const url = `https://backend.oneapi.in/sms/sendotp`;
     const data = {
       apiKey: process.env.ONEAPI_KEY,
-      brandName: "Coinsup",
-      customerName: "Welcome to Coinsup",
+      brandName: "Arch Official",
+      customerName: "Welcome to Arch Official",
       number: phone,
       otp: otp,
     };

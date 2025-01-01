@@ -21,7 +21,6 @@ const router = express.Router();
 // router.post("/get-payment-method", browserMiddleware, getUserPaymentDetailsController);
 router.post("/send-mobile-otp", sendMobileOtpController);
 router.post("/login", loginController);
-router.post("/updateprofile", authMiddleware, userProfileUpdateController);
 router.post("/getUserData", authMiddleware, authController);
 router.post("/send-otp", sendMailController);
 router.post("/verify-otp", verifyOtpController);
@@ -29,5 +28,6 @@ router.get("/leaderboard", leaderboardController);
 // OTP
 router.post("/sendotp", sendOtpController);
 router.post("/profileupdate", authMiddleware, profileUpdateController);
+router.post("/updateprofile", authMiddleware, userProfileUpdateController);
 
 module.exports = router;
