@@ -557,8 +557,6 @@ const sendOtpController = async (req, res) => {
     const { mobile } = req.body;
 
     const otp = generateOTP(4);
-    const response = await sendSMS(mobile, otp);
-    const encryptedOTP = encrypt(otp, key, iv);
 
     const saveOtp = await userModel.findOneAndUpdate(
       { mobile: mobile },
