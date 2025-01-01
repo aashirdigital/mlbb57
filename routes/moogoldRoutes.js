@@ -76,7 +76,8 @@ const checkAndProcessRefunds = async () => {
           });
           if (user) {
             const newBalance =
-              parseFloat(user.balance) + parseFloat(order.discountedPrice);
+              parseFloat(user.balance) +
+              parseFloat(order.discountedPrice || order?.price);
             await userModel.findOneAndUpdate(
               { mobile: order.customer_mobile },
               { $set: { balance: newBalance } },

@@ -132,6 +132,14 @@ const registerController = async (req, res) => {
 const loginController = async (req, res) => {
   try {
     let user = await userModel.findOne({ mobile: req.body.mobile });
+
+    if (req.body.otp !== user?.mobileOtp) {
+      return res.status(201).send({
+        success: false,
+        message: "Incorrect OTP",
+      });
+    }
+
     let userExist;
     if (!user) {
       userExist = "no";
@@ -552,20 +560,21 @@ const sendOtpController = async (req, res) => {
     const response = await sendSMS(mobile, otp);
     const encryptedOTP = encrypt(otp, key, iv);
 
-    if (response.success) {
+    const saveOtp = await userModel.findOneAndUpdate(
+      { mobile: mobile },
+      { $set: { mobileOtp: otp } },
+      { new: true }
+    );
+
+    if (saveOtp) {
       return res.status(200).send({
         success: true,
-        message: "OTPs sent successfully",
-        data: {
-          otp: encryptedOTP,
-          key: key.toString("hex"),
-          iv: iv.toString("hex"),
-        },
+        message: "OTP sent successfully",
       });
     } else {
-      return res.status(201).send({
-        success: false,
-        message: response.message,
+      return res.status(200).send({
+        success: true,
+        message: "Failed to sent OTP",
       });
     }
   } catch (error) {

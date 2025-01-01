@@ -28,11 +28,10 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    // password: {
-    //   type: String,
-    //   required: [true, "password is required"],
-    // },
     emailOtp: {
+      type: String,
+    },
+    mobileOtp: {
       type: String,
     },
     reseller: {
