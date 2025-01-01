@@ -558,21 +558,34 @@ const sendOtpController = async (req, res) => {
 
     const otp = generateOTP(4);
 
-    const saveOtp = await userModel.findOneAndUpdate(
+    // Send OTP via SMS
+    const smsResponse = await sendSMS(mobile, otp);
+
+    console.log(smsResponse);
+
+    if (!smsResponse.success) {
+      return res.status(500).send({
+        success: false,
+        message: smsResponse.message,
+      });
+    }
+
+    // Save OTP in the database
+    const updatedUser = await userModel.findOneAndUpdate(
       { mobile: mobile },
       { $set: { mobileOtp: otp } },
-      { new: true }
+      { new: true, upsert: true } // Upsert to create if not found
     );
 
-    if (saveOtp) {
+    if (updatedUser) {
       return res.status(200).send({
         success: true,
         message: "OTP sent successfully",
       });
     } else {
-      return res.status(200).send({
-        success: true,
-        message: "Failed to sent OTP",
+      return res.status(500).send({
+        success: false,
+        message: "Failed to save OTP in database",
       });
     }
   } catch (error) {

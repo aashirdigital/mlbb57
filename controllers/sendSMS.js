@@ -11,6 +11,7 @@ const sendSMS = async (phone, otp) => {
       otp: otp,
     };
     const response = await axios.post(url, data);
+
     if (response.data.success) {
       return {
         success: true,

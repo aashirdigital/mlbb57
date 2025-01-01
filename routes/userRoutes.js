@@ -19,7 +19,7 @@ const router = express.Router();
 // router.post("/register", registerController);
 // router.post("/update-pass", updatePassController);
 // router.post("/get-payment-method", browserMiddleware, getUserPaymentDetailsController);
-// router.post("/send-mobile-otp", sendMobileOtpController);
+router.post("/send-mobile-otp", sendMobileOtpController);
 router.post("/login", loginController);
 router.post("/updateprofile", authMiddleware, userProfileUpdateController);
 router.post("/getUserData", authMiddleware, authController);
