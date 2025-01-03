@@ -246,9 +246,11 @@ const userProfileUpdateController = async (req, res) => {
         message: "Failed to update user profile",
       });
     }
+
     return res.status(202).send({
       success: true,
       message: "Profile Updated",
+      user: userUpdate,
     });
   } catch (error) {
     console.log(error.message);

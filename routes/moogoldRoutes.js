@@ -339,7 +339,10 @@ router.post("/create", authMiddleware, async (req, res) => {
         .status(201)
         .send({ success: false, message: "Product not found" });
     }
+
+    const user = await userModel.findOne({ email: customerEmail });
     const pack = product.cost.filter((item) => item.prodId === prodId)[0];
+    const price = user?.reseller === "yes" ? pack?.resPrice : pack?.price;
 
     // saving order
     const order = new orderModel({
@@ -347,7 +350,7 @@ router.post("/create", authMiddleware, async (req, res) => {
       amount: pack.amount,
       orderId: orderId,
       pname: productName,
-      price: pack.price,
+      price: price,
       customer_email: customerEmail,
       customer_mobile: customerNumber,
       userId: userid,
@@ -368,7 +371,7 @@ router.post("/create", authMiddleware, async (req, res) => {
         apiKey: process.env.ONEGATEWAY_API_KEY,
         scannerIncluded: true,
         orderId,
-        amount: pack.price,
+        amount: price,
         paymentNote,
         customerName,
         customerEmail,
@@ -650,8 +653,11 @@ router.post("/wallet", authMiddleware, async (req, res) => {
     }
 
     // searching pack
+    const user = await userModel.findOne({ email: customerEmail });
     const pack = prod.cost.filter((item) => item.prodId === prodId)[0];
+    const price = user?.reseller === "yes" ? pack?.resPrice : pack?.price;
     const productid = pack.id;
+
     if (!pack) {
       return res.status(201).send({
         success: false,
@@ -663,20 +669,19 @@ router.post("/wallet", authMiddleware, async (req, res) => {
     const walletDiscount = await walletDiscountModel.findOne({});
     const wd = (walletDiscount?.status && walletDiscount.discount) || 0;
 
-    const user = await userModel.findOne({ email: customerEmail });
     if (!user) {
       return res.status(201).send({
         success: false,
         message: "User not found",
       });
     }
-    if (parseFloat(user?.balance) < parseFloat(pack.price)) {
+    if (parseFloat(user?.balance) < parseFloat(price)) {
       return res
         .status(201)
         .send({ success: false, message: "Balance is less for this order" });
     }
 
-    const productPrice = pack?.price - (pack?.price * wd) / 100;
+    const productPrice = price - (price * wd) / 100;
     const newBalance = Math.max(
       0,
       parseFloat(user?.balance) - parseFloat(productPrice)
@@ -743,7 +748,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
         api: "yes",
         pname: productName,
         amount: pack.amount,
-        price: pack.price,
+        price: price,
         discountedPrice: productPrice,
         customer_email: customerEmail,
         customer_mobile: customerNumber,
@@ -812,7 +817,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
         orderId: orderId,
         api: "yes",
         amount: pack.amount,
-        price: pack.price,
+        price: price,
         discountedPrice: productPrice,
         pname: productName,
         customer_email: customerEmail,
@@ -842,7 +847,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
       orderId: orderId,
       api: "yes",
       amount: pack.amount,
-      price: pack.price,
+      price: price,
       discountedPrice: productPrice,
       pname: productName,
       customer_email: customerEmail,
@@ -861,7 +866,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
       const dynamicData = {
         orderId: `${orderId}`,
         amount: `${pack.amount}`,
-        price: `${pack.price}`,
+        price: `${price}`,
         p_info: `${productName}`,
         userId: `${userid}`,
         zoneId: `${zoneid}`,

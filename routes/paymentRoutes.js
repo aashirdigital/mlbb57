@@ -64,10 +64,12 @@ router.post("/get-user-payments", authMiddleware, async (req, res) => {
 // get role
 router.post("/get-role", browserMiddleware, async (req, res) => {
   try {
-    const { userid, zoneid, checkrole, gameName, productid, region } = req.body;
+    const { userid, zoneid, checkrole, gameName, productid } = req.body;
 
     let response;
     if (checkrole === "0") {
+      const region = "brazil";
+      const productid = "13";
       const uid = process.env.UID;
       const email = process.env.EMAIL;
       const product = "mobilelegends";
