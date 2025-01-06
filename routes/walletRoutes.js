@@ -268,7 +268,7 @@ router.get("/status", async (req, res) => {
           const newHistory = new walletHistoryModel({
             orderId: orderId,
             email: customerEmail,
-            mobile: mobile,
+            mobile: customerNumber,
             balanceBefore: user?.balance,
             balanceAfter: newBalance,
             amount: data.amount,
