@@ -18,7 +18,15 @@ const cron = require("node-cron");
 async function updatePendingOrdersToFailed() {
   try {
     const result = await orderModel.updateMany(
-      { status: "pending", api: "yes", apiName: "smileOne" },
+      {
+        $or: [
+          { apiName: "smileOne", api: "yes", status: "pending" },
+          {
+            apiName: "moogold",
+            $or: [{ mid: null }, { mid: { $exists: false } }],
+          },
+        ],
+      },
       { $set: { status: "failed" } },
       { new: true }
     );
@@ -45,6 +53,7 @@ router.post("/create", authMiddleware, async (req, res) => {
       userid,
       zoneid,
       discount,
+      inGameName,
     } = req.body;
 
     if (
@@ -85,6 +94,7 @@ router.post("/create", authMiddleware, async (req, res) => {
       userId: userid,
       zoneId: zoneid,
       prodId: prodId,
+      inGameName: inGameName,
       originalPrice: pack.buyingprice,
       discount: discount,
       region: paymentNote,
@@ -330,6 +340,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
       customerMobile,
       productName,
       discount,
+      inGameName,
     } = req.body;
 
     if (
@@ -476,6 +487,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
         amount: pack.amount,
         customer_email: customerEmail,
         customer_mobile: customerMobile,
+        inGameName: inGameName,
         userId: userid,
         zoneId: zoneid,
         originalPrice: pack.buyingprice,
@@ -537,6 +549,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
         amount: pack.amount,
         customer_email: customerEmail,
         customer_mobile: customerMobile,
+        inGameName: inGameName,
         userId: userid,
         zoneId: zoneid,
         originalPrice: pack.buyingprice,

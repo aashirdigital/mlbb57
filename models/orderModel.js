@@ -27,6 +27,10 @@ const orderSchema = new mongoose.Schema(
     customer_mobile: {
       type: String,
     },
+    inGameName: {
+      type: String,
+      default: null,
+    },
     userId: {
       type: String,
       default: null,

@@ -316,6 +316,7 @@ router.post("/create", authMiddleware, async (req, res) => {
       userid,
       zoneid,
       discount,
+      inGameName,
     } = req.body;
 
     if (
@@ -353,6 +354,7 @@ router.post("/create", authMiddleware, async (req, res) => {
       price: price,
       customer_email: customerEmail,
       customer_mobile: customerNumber,
+      inGameName: inGameName,
       userId: userid,
       zoneId: zoneid,
       prodId: prodId,
@@ -628,6 +630,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
       productName,
       gameName,
       discount,
+      inGameName,
     } = req.body;
 
     if (
@@ -754,6 +757,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
         customer_mobile: customerNumber,
         userId: userid,
         zoneId: zoneid,
+        inGameName: inGameName,
         originalPrice: pack.buyingprice,
         status: "failed",
         paymentMode: "wallet",
@@ -824,6 +828,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
         customer_mobile: customerNumber,
         userId: userid,
         zoneId: zoneid,
+        inGameName: inGameName,
         originalPrice: pack.buyingprice,
         status: "failed",
         paymentMode: "wallet",
@@ -854,6 +859,7 @@ router.post("/wallet", authMiddleware, async (req, res) => {
       customer_mobile: customerNumber,
       userId: userid,
       zoneId: zoneid,
+      inGameName: inGameName,
       originalPrice: pack.buyingprice,
       status: "processing",
       paymentMode: "wallet",
