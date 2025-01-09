@@ -68,17 +68,44 @@ const editUserController = async (req, res) => {
     if (!user) {
       return res.status(200).send({ success: false, message: "No user found" });
     }
-    if (req.body.addBalance) {
+
+    if (req.body.balance) {
+      const generateOrderId = () => {
+        const now = new Date();
+        const year = now.getFullYear().toString().slice(-2); // Last two digits of the year
+        const month = (now.getMonth() + 1).toString().padStart(2, "0"); // Months are zero-indexed
+        const day = now.getDate().toString().padStart(2, "0");
+        const hours = now.getHours().toString().padStart(2, "0");
+        const minutes = now.getMinutes().toString().padStart(2, "0");
+        const seconds = now.getSeconds().toString().padStart(2, "0");
+        const randomNum = Math.floor(1000 + Math.random() * 9000); // Ensures a 4-digit number
+        const orderId = `${year}${month}${day}${hours}${minutes}${seconds}${randomNum}`;
+        return orderId;
+      };
+
+      const orderId = generateOrderId();
+      let balance = String(req.body.balance);
+      let type;
+      let amountString;
+      if (balance.startsWith("-")) {
+        type = "withdraw";
+        amountString = balance.split("-")[1];
+      } else {
+        type = "addmoney";
+        amountString = balance;
+      }
+
       const updateUser = await userModel.findOneAndUpdate(
         { _id },
         {
           $set: {
             ...req.body,
-            balance: parseInt(user?.balance) + parseInt(req.body.addBalance),
+            balance: parseInt(user?.balance) + parseInt(req.body.balance),
           },
         },
         { new: true }
       );
+
       if (!updateUser) {
         return res.status(200).send({
           success: false,
@@ -86,25 +113,19 @@ const editUserController = async (req, res) => {
         });
       }
 
-      const generateOrderId = (length) => {
-        const numbers = "01234567"; // 10 numbers
-        const randomNumbers = Array.from({ length: length }, () =>
-          numbers.charAt(Math.floor(Math.random() * numbers.length))
-        );
-        const orderId = randomNumbers.join("");
-        return orderId;
-      };
-      const obj = {
-        name: updateUser?.fname,
-        email: updateUser?.email,
-        amount: req.body.addBalance,
-        mobile: updateUser?.mobile,
-        status: "success",
-        upi_txn_id: generateOrderId(7),
-        orderId: generateOrderId(12),
-      };
-      const newPayment = new paymentModel(obj);
-      await newPayment.save();
+      // saving wallet history
+      const newHistory = new walletHistoryModel({
+        orderId: orderId,
+        email: user?.email,
+        mobile: user?.mobile,
+        balanceBefore: user?.balance,
+        balanceAfter: parseInt(user?.balance) + parseInt(req.body.balance),
+        amount: amountString,
+        product: "Admin",
+        type: type,
+        admin: true,
+      });
+      await newHistory.save();
 
       return res
         .status(201)
@@ -126,6 +147,7 @@ const editUserController = async (req, res) => {
         .send({ success: true, message: "User Updated Successfully" });
     }
   } catch (error) {
+    console.log(error.message);
     return res.status(500).send({
       success: false,
       message: `Admin Edit User Ctrl ${error.message}`,
@@ -426,10 +448,12 @@ const adminAddMoneyController = async (req, res) => {
         .status(400)
         .send({ success: false, message: "User not found" });
     }
-    const newBalance = Math.max(
-      0,
-      parseFloat(user?.balance) + parseFloat(amount)
-    );
+    let newBalance;
+    if (type === "withdraw") {
+      newBalance = Math.max(0, parseFloat(user?.balance) - parseFloat(amount));
+    } else {
+      newBalance = Math.max(0, parseFloat(user?.balance) + parseFloat(amount));
+    }
     const updateBalance = await userModel.findOneAndUpdate(
       { mobile: mobile },
       { $set: { balance: newBalance } },
