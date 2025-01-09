@@ -124,8 +124,9 @@ const checkAndProcessRefunds = async () => {
 };
 
 // Schedule the job to run every 5 minutes
-cron.schedule("*/5 * * * *", () => {});
-checkAndProcessRefunds();
+cron.schedule("*/5 * * * *", () => {
+  checkAndProcessRefunds();
+});
 
 // REFUND FUNCTION
 // REFUND FUNCTION
