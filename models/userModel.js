@@ -34,6 +34,14 @@ const userSchema = new mongoose.Schema(
     mobileOtp: {
       type: String,
     },
+    otpAttemps: {
+      type: Number,
+      default: 0,
+    },
+    lockUntil: {
+      type: Date,
+      default: null,
+    },
     reseller: {
       type: String,
       default: "no",

@@ -13,7 +13,7 @@ const authMiddleware = require("../middlewares/authMiddleware");
 const router = express.Router();
 // routes
 router.post("/login", loginController);
-router.post("/send-mobile-otp", sendMobileOtpController);
+// router.post("/send-mobile-otp", sendMobileOtpController);
 router.post("/getUserData", authMiddleware, authController);
 router.post("/send-otp", sendMailController);
 router.post("/verify-otp", verifyOtpController);

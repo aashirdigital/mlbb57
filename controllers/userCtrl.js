@@ -8,6 +8,7 @@ const jwt = require("jsonwebtoken");
 const sendMail = require("./sendMail");
 const sendSMS = require("./sendSMS");
 const crypto = require("crypto");
+const moment = require("moment-timezone");
 
 // generate OTP
 function generateOTP(digits) {
@@ -31,9 +32,51 @@ const iv = crypto.randomBytes(16);
 
 const loginController = async (req, res) => {
   try {
-    let user = await userModel.findOne({ mobile: req.body.mobile });
+    const { mobile } = req.body;
+
+    let user = await userModel.findOne({ mobile: mobile });
+
+    const currentTime = new Date();
+
+    if (user.lockUntil) {
+      // Convert `lockUntil` to IST
+      const lockUntilIST = new Date(
+        user.lockUntil.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+      );
+      // Get current time in IST
+      const currentTimeIST = new Date(
+        currentTime.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+      );
+      // Compare times
+      if (currentTimeIST < lockUntilIST) {
+        return res.status(201).send({
+          success: false,
+          message: "Your account is locked!",
+        });
+      }
+    }
+
+    if (user?.otpAttemps >= 3) {
+      const lockUntilIST = moment()
+        .tz("Asia/Kolkata")
+        .add(30, "minutes")
+        .toDate();
+      user.lockUntil = lockUntilIST;
+      await user.save();
+
+      return res.status(201).send({
+        success: false,
+        message: "Multiple OTP Attempts! Account locked for 30 mins",
+      });
+    }
 
     if (req.body.otp !== user?.mobileOtp) {
+      const userUpdate = await userModel.findOneAndUpdate(
+        { mobile: mobile },
+        { $set: { otpAttemps: user?.otpAttemps + 1 } },
+        { new: true }
+      );
+
       return res.status(201).send({
         success: false,
         message: "Incorrect OTP",
@@ -80,6 +123,82 @@ const loginController = async (req, res) => {
     console.log(error.message);
     return res.status(500).send({
       success: false, // Set to false on error
+      message: `Login Controller ${error.message}`,
+    });
+  }
+};
+
+const mobileOtpController = async (req, res) => {
+  try {
+    const { mobile } = req.body;
+
+    let user = await userModel.findOne({ mobile: mobile });
+    const currentTime = new Date();
+    if (user.lockUntil) {
+      // Convert `lockUntil` to IST
+      const lockUntilIST = new Date(
+        user.lockUntil.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+      );
+      // Get current time in IST
+      const currentTimeIST = new Date(
+        currentTime.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+      );
+      // Compare times
+      if (currentTimeIST < lockUntilIST) {
+        return res.status(201).send({
+          success: false,
+          message: "Your account is locked!",
+        });
+      }
+    }
+
+    if (user.lockUntil && new Date() >= user.lockUntil) {
+      user.lockUntil = null;
+      user.otpAttemps = 0;
+      await user.save();
+    }
+
+    const otp = generateOTP(6);
+    const smsResponse = await sendSMS(mobile, otp);
+
+    if (!smsResponse.success) {
+      return res.status(500).send({
+        success: false,
+        message: smsResponse.message,
+      });
+    }
+
+    const updatedUser = await userModel.findOneAndUpdate(
+      { mobile: mobile },
+      { $set: { mobileOtp: otp } },
+      { new: true, upsert: true } // Upsert to create if not found
+    );
+
+    // Set emailOtpCreatedAt to null after 60 seconds
+    setTimeout(async () => {
+      await userModel.findOneAndUpdate(
+        { _id: updatedUser._id },
+        { $set: { mobileOtp: null } },
+        { new: true }
+      );
+      console.log("otp expired");
+    }, 60000);
+
+    if (updatedUser) {
+      return res.status(200).send({
+        success: true,
+        message: "OTP sent successfully",
+      });
+    } else {
+      return res.status(500).send({
+        success: false,
+        message: "Failed to save OTP in database",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: true,
       message: `Login Controller ${error.message}`,
     });
   }
@@ -385,56 +504,6 @@ const leaderboardController = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Server error" });
-  }
-};
-
-const mobileOtpController = async (req, res) => {
-  try {
-    const { mobile } = req.body;
-
-    const otp = generateOTP(4);
-    const smsResponse = await sendSMS(mobile, otp);
-
-    if (!smsResponse.success) {
-      return res.status(500).send({
-        success: false,
-        message: smsResponse.message,
-      });
-    }
-
-    const updatedUser = await userModel.findOneAndUpdate(
-      { mobile: mobile },
-      { $set: { mobileOtp: otp } },
-      { new: true, upsert: true } // Upsert to create if not found
-    );
-
-    // Set emailOtpCreatedAt to null after 60 seconds
-    setTimeout(async () => {
-      await userModel.findOneAndUpdate(
-        { _id: updatedUser._id },
-        { $set: { mobileOtp: null } },
-        { new: true }
-      );
-      console.log("otp expired");
-    }, 60000); // 60 seconds
-
-    if (updatedUser) {
-      return res.status(200).send({
-        success: true,
-        message: "OTP sent successfully",
-      });
-    } else {
-      return res.status(500).send({
-        success: false,
-        message: "Failed to save OTP in database",
-      });
-    }
-  } catch (error) {
-    console.log(error);
-    res.status(500).send({
-      success: true,
-      message: `Login Controller ${error.message}`,
-    });
   }
 };
 
