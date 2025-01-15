@@ -38,7 +38,7 @@ const loginController = async (req, res) => {
 
     const currentTime = new Date();
 
-    if (user.lockUntil) {
+    if (user && user?.lockUntil) {
       // Convert `lockUntil` to IST
       const lockUntilIST = new Date(
         user.lockUntil.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
@@ -84,16 +84,13 @@ const loginController = async (req, res) => {
     }
 
     let userExist;
-    if (!user) {
+    if (!user?.email) {
       userExist = "no";
       const randomBalance = Math.floor(Math.random() * 4);
-      // saving user
-      user = new userModel({
-        mobile: req.body.mobile,
-        isAdmin: false,
-        balance: randomBalance,
-        reseller: "no",
-      });
+      user.balance = randomBalance;
+      user.mobileOtp = null;
+      user.otpAttemps = null;
+      user.lockUntil = null;
       await user.save();
       // saving register wallet history
       const newHistory = new registerWalletModel({
@@ -103,6 +100,10 @@ const loginController = async (req, res) => {
       await newHistory.save();
     } else {
       userExist = "yes";
+      user.mobileOtp = null;
+      user.otpAttemps = null;
+      user.lockUntil = null;
+      await user.save();
     }
 
     const isAdmin = user.isAdmin || false;
@@ -133,8 +134,9 @@ const mobileOtpController = async (req, res) => {
     const { mobile } = req.body;
 
     let user = await userModel.findOne({ mobile: mobile });
+
     const currentTime = new Date();
-    if (user.lockUntil) {
+    if (user && user?.lockUntil) {
       // Convert `lockUntil` to IST
       const lockUntilIST = new Date(
         user.lockUntil.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
@@ -152,7 +154,7 @@ const mobileOtpController = async (req, res) => {
       }
     }
 
-    if (user.lockUntil && new Date() >= user.lockUntil) {
+    if (user?.lockUntil && new Date() >= user?.lockUntil) {
       user.lockUntil = null;
       user.otpAttemps = 0;
       await user.save();
