@@ -91,6 +91,7 @@ const loginController = async (req, res) => {
       user.mobileOtp = null;
       user.otpAttemps = null;
       user.lockUntil = null;
+      user.mobileVerified = true;
       await user.save();
       // saving register wallet history
       const newHistory = new registerWalletModel({
@@ -103,6 +104,7 @@ const loginController = async (req, res) => {
       user.mobileOtp = null;
       user.otpAttemps = null;
       user.lockUntil = null;
+      user.mobileVerified = true;
       await user.save();
     }
 
