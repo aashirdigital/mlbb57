@@ -27,9 +27,14 @@ const paymentSchema = new mongoose.Schema(
     },
     txnId: {
       type: String,
-      required: true,
+    },
+    payerUpi: {
+      type: String,
     },
     type: {
+      type: String,
+    },
+    pname: {
       type: String,
     },
     payDate: {

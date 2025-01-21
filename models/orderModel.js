@@ -79,6 +79,10 @@ const orderSchema = new mongoose.Schema(
     utr: {
       type: String,
     },
+    loopCount: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

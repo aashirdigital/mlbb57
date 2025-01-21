@@ -37,8 +37,6 @@ const checkAndProcessRefunds = async () => {
       apiName: "moogold",
     });
 
-    console.log(orders);
-
     for (const order of orders) {
       const payload = {
         path: "order/order_detail",
@@ -122,7 +120,6 @@ const checkAndProcessRefunds = async () => {
     console.error("Error in refund job:", err.message);
   }
 };
-
 // Schedule the job to run every 5 minutes
 cron.schedule("*/5 * * * *", () => {
   checkAndProcessRefunds();
@@ -346,27 +343,6 @@ router.post("/create", authMiddleware, async (req, res) => {
     const pack = product.cost.filter((item) => item.prodId === prodId)[0];
     const price = user?.reseller === "yes" ? pack?.resPrice : pack?.price;
 
-    // saving order
-    const order = new orderModel({
-      api: "yes",
-      amount: pack.amount,
-      orderId: orderId,
-      pname: productName,
-      price: price,
-      customer_email: customerEmail,
-      customer_mobile: customerNumber,
-      inGameName: inGameName,
-      userId: userid,
-      zoneId: zoneid,
-      prodId: prodId,
-      discount: discount,
-      originalPrice: pack.buyingprice,
-      paymentMode: "onegateway",
-      apiName: "moogold",
-      status: "processing",
-    });
-    await order.save();
-
     // Proceeding with the payment initiation
     const response = await axios.post(
       "https://backend.onegateway.in/payment/initiate",
@@ -384,7 +360,41 @@ router.post("/create", authMiddleware, async (req, res) => {
     );
 
     if (response.data && response.data.success) {
-      console.log(response.data);
+      // saving order
+      const order = new orderModel({
+        api: "yes",
+        amount: pack.amount,
+        orderId: orderId,
+        pname: productName,
+        price: price,
+        customer_email: customerEmail,
+        customer_mobile: customerNumber,
+        inGameName: inGameName,
+        userId: userid,
+        zoneId: zoneid,
+        prodId: prodId,
+        discount: discount,
+        originalPrice: pack.buyingprice,
+        paymentMode: "onegateway",
+        apiName: "moogold",
+        status: "processing",
+      });
+      await order.save();
+
+      // saving payment
+      const paymentObject = {
+        name: customerName,
+        email: customerEmail,
+        mobile: customerNumber,
+        amount: price,
+        orderId: orderId,
+        status: "pending",
+        type: "order",
+        pname: productName,
+      };
+      const newPayment = new paymentModel(paymentObject);
+      await newPayment.save();
+
       return res.status(200).send({ success: true, data: response.data.data });
     } else {
       return res
@@ -429,19 +439,15 @@ router.get("/status", async (req, res) => {
           utr,
         } = data;
 
-        // saving payment
-        const paymentObject = {
-          orderId: orderId,
-          name: customerName,
-          email: customerEmail,
-          mobile: customerNumber,
-          amount: amount,
-          status: data.status,
-          txnId: utr,
-          type: "order",
-        };
-        const newPayment = new paymentModel(paymentObject);
-        await newPayment.save();
+        const payment = await paymentModel.findOne({ orderId: orderId });
+        if (!payment) {
+          return res.redirect(`${process.env.BASE_URL}/failure`);
+        }
+        // updating payment status
+        payment.status = "success";
+        payment.utr = utr;
+        payment.payerUpi = payerUpi || "none";
+        await payment.save();
 
         // searching order
         const order = await orderModel.findOne({ orderId: orderId });
@@ -552,21 +558,19 @@ router.get("/status", async (req, res) => {
             { $set: { status: "failed" } },
             { new: true }
           );
-
           const err = new errModel({
             orderId: orderId,
             error: response.data.err_code,
             message: response.data.err_message,
           });
           await err.save();
-
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
 
         // updating order status
         const updateOrder = await orderModel.findOneAndUpdate(
           { orderId: orderId },
-          { $set: { status: "success", mid: response.data.order_id } },
+          { $set: { status: "processing", mid: response.data.order_id } },
           { new: true }
         );
 
@@ -843,8 +847,6 @@ router.post("/wallet", authMiddleware, async (req, res) => {
         message: response.data.err_message,
       });
       await err.save();
-
-      console.log(response.data);
 
       return res.status(201).send({ success: false, message: "Order Failed" });
     }

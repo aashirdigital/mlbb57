@@ -58,27 +58,6 @@ router.post("/create", authMiddleware, async (req, res) => {
     const pack = product.cost.filter((item) => item.prodId === prodId)[0];
     const price = user?.reseller === "yes" ? pack?.resPrice : pack?.price;
 
-    // saving order
-    const order = new orderModel({
-      api: "no",
-      amount: pack.amount,
-      orderId: orderId,
-      pname: productName,
-      price: price,
-      customer_email: customerEmail,
-      customer_mobile: customerNumber,
-      userId: userid,
-      zoneId: zoneid,
-      inGameName: inGameName,
-      prodId: prodId,
-      originalPrice: pack.buyingprice,
-      discount: discount,
-      paymentMode: "onegateway",
-      apiName: "manaul",
-      status: "pending",
-    });
-    await order.save();
-
     // Proceeding with the payment initiation
     const response = await axios.post(
       "https://backend.onegateway.in/payment/initiate",
@@ -96,7 +75,41 @@ router.post("/create", authMiddleware, async (req, res) => {
     );
 
     if (response.data && response.data.success) {
-      console.log(response.data);
+      // saving order
+      const order = new orderModel({
+        api: "no",
+        amount: pack.amount,
+        orderId: orderId,
+        pname: productName,
+        price: price,
+        customer_email: customerEmail,
+        customer_mobile: customerNumber,
+        userId: userid,
+        zoneId: zoneid,
+        inGameName: inGameName,
+        prodId: prodId,
+        originalPrice: pack.buyingprice,
+        discount: discount,
+        paymentMode: "onegateway",
+        apiName: "manaul",
+        status: "pending",
+      });
+      await order.save();
+
+      // saving payment
+      const paymentObject = {
+        name: customerName,
+        email: customerEmail,
+        mobile: customerNumber,
+        amount: price,
+        orderId: orderId,
+        status: "pending",
+        type: "order",
+        pname: productName,
+      };
+      const newPayment = new paymentModel(paymentObject);
+      await newPayment.save();
+
       return res.status(200).send({ success: true, data: response.data.data });
     } else {
       console.log(response.data);
@@ -142,19 +155,15 @@ router.get("/status", async (req, res) => {
           utr,
         } = data;
 
-        // saving payment
-        const paymentObject = {
-          orderId: orderId,
-          name: customerName,
-          email: customerEmail,
-          mobile: customerNumber,
-          amount: amount,
-          status: data.status,
-          txnId: utr,
-          type: "order",
-        };
-        const newPayment = new paymentModel(paymentObject);
-        await newPayment.save();
+        const payment = await paymentModel.findOne({ orderId: orderId });
+        if (!payment) {
+          return res.redirect(`${process.env.BASE_URL}/failure`);
+        }
+        // updating payment status
+        payment.status = "success";
+        payment.utr = utr;
+        payment.payerUpi = payerUpi || "none";
+        await payment.save();
 
         // searching order
         const order = await orderModel.findOne({ orderId: orderId });
