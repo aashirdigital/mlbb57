@@ -45,26 +45,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(morgan("dev"));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static("build"));
-
-// Middleware to check referer
-function checkReferer(req, res, next) {
-  const referer = req.headers.referer;
-  const allowedDomains = [
-    `${process.env.BASE_URL}`,
-    `${process.env.BASE_URL}/`,
-    `${process.env.BASE_URL_TWO}`,
-    `${process.env.BASE_URL_TWO}/`,
-    "https://pgateway.in",
-    "http://localhost:3000",
-    "http://localhost:8080",
-  ];
-  if (referer && allowedDomains.some((domain) => referer.startsWith(domain))) {
-    next();
-  } else {
-    res.status(403).json({ message: "Forbidden" });
-  }
-}
-// app.use("/api", checkReferer);
+app.set("trust proxy", true);
 
 // Static file for images
 app.use(

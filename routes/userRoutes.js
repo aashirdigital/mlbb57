@@ -14,9 +14,9 @@ const router = express.Router();
 const rateLimit = require("express-rate-limit");
 
 const otpRequestLimiter = rateLimit({
-  windowMs: 30 * 60 * 1000,
-  max: 3,
-  keyGenerator: (req) => req.ip,
+  windowMs: 30 * 60 * 1000, // 30 minutes
+  max: 3, // Maximum 3 requests
+  keyGenerator: (req) => req.ip, // Ensures rate limiting is per IP
   message: {
     success: false,
     message: "Too many OTP requests. Please try again later.",
