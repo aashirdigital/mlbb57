@@ -5,38 +5,31 @@ const {
   sendMailController,
   verifyOtpController,
   userProfileUpdateController,
-  sendMobileOtpController,
   leaderboardController,
   mobileOtpController,
 } = require("../controllers/userCtrl");
 const authMiddleware = require("../middlewares/authMiddleware");
 const router = express.Router();
+const rateLimit = require("express-rate-limit");
 
-const usageCount = {};
-// Routes
+const otpRequestLimiter = rateLimit({
+  windowMs: 3 * 60 * 1000,
+  max: 3,
+  keyGenerator: (req) => req.ip,
+  message: {
+    success: false,
+    message: "Too many OTP requests from this device. Please try again later.",
+  },
+});
+
+// routes
 router.post("/login", loginController);
 router.post("/getUserData", authMiddleware, authController);
 router.post("/send-otp", sendMailController);
 router.post("/verify-otp", verifyOtpController);
 router.get("/leaderboard", leaderboardController);
+// OTP
 router.post("/updateprofile", authMiddleware, userProfileUpdateController);
-
-router.post(
-  "/mobileotp",
-  (req, res, next) => {
-    const deviceId = req.headers["device-id"]; // Get device ID from request header
-    if (!usageCount[deviceId]) {
-      usageCount[deviceId] = 0;
-    }
-    usageCount[deviceId] += 1;
-    if (usageCount[deviceId] > 3) {
-      return res
-        .status(429)
-        .json({ message: "Device blocked due to excessive usage" });
-    }
-    next();
-  },
-  mobileOtpController
-);
+router.post("/mobileotp", otpRequestLimiter, mobileOtpController);
 
 module.exports = router;
