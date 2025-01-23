@@ -25,7 +25,6 @@ const otpRequestLimiter = rateLimit({
     message: "Too many OTP requests. Please try again later.",
   },
 });
-
 // routes
 router.post("/login", loginController);
 router.post("/getUserData", authMiddleware, authController);
@@ -34,6 +33,6 @@ router.post("/verify-otp", verifyOtpController);
 router.get("/leaderboard", leaderboardController);
 // OTP
 router.post("/updateprofile", authMiddleware, userProfileUpdateController);
-router.post("/mobileotp", otpRequestLimiter, mobileOtpController);
+// router.post("/mobileotp", otpRequestLimiter, mobileOtpController);
 
 module.exports = router;

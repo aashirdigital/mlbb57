@@ -8,22 +8,6 @@ const sendSMS = require("./sendSMS");
 const crypto = require("crypto");
 const moment = require("moment-timezone");
 
-async function deleteusers() {
-  try {
-    const users = await userModel.find({ mobile: { $regex: /^93660/ } });
-    if (users.length === 0) {
-      console.log("No users found with mobile numbers starting with 93660.");
-      return;
-    }
-    const result = await userModel.deleteMany({ mobile: { $regex: /^93660/ } });
-    console.log(`${result.deletedCount} users deleted.`);
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-deleteusers();
-
 // generate OTP
 function generateOTP(digits) {
   const multiplier = Math.pow(10, digits - 1);
