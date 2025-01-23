@@ -14,9 +14,9 @@ const router = express.Router();
 const rateLimit = require("express-rate-limit");
 
 const otpRequestLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  keyGenerator: (req) => req.body.mobile,
+  windowMs: 30 * 60 * 1000,
+  max: 3,
+  keyGenerator: (req) => req.ip,
   message: {
     success: false,
     message: "Too many OTP requests. Please try again later.",
@@ -25,7 +25,6 @@ const otpRequestLimiter = rateLimit({
 
 // routes
 router.post("/login", loginController);
-// router.post("/send-mobile-otp", sendMobileOtpController);
 router.post("/getUserData", authMiddleware, authController);
 router.post("/send-otp", sendMailController);
 router.post("/verify-otp", verifyOtpController);
@@ -33,5 +32,6 @@ router.get("/leaderboard", leaderboardController);
 // OTP
 router.post("/mobileotp", otpRequestLimiter, mobileOtpController);
 router.post("/updateprofile", authMiddleware, userProfileUpdateController);
+// router.post("/send-mobile-otp", sendMobileOtpController);
 
 module.exports = router;

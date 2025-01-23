@@ -1,7 +1,5 @@
 const userModel = require("../models/userModel");
 const orderModel = require("../models/orderModel");
-const axios = require("axios");
-const subscribeModel = require("../models/subcribeModel");
 const registerWalletModel = require("../models/registerWalletModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -168,7 +166,7 @@ const mobileOtpController = async (req, res) => {
     console.log(smsResponse);
 
     if (!smsResponse.success) {
-      return res.status(500).send({
+      return res.status(201).send({
         success: false,
         message: smsResponse.message,
       });

@@ -453,6 +453,36 @@ router.post("/wallet", authMiddleware, async (req, res) => {
       parseFloat(user?.balance) - parseFloat(productPrice)
     );
 
+    // update user balance
+    const updateBalance = await userModel.findOneAndUpdate(
+      {
+        email: customerEmail,
+      },
+      {
+        $set: {
+          balance: newBalance,
+        },
+      },
+      { new: true }
+    );
+    if (!updateBalance) {
+      return res
+        .status(201)
+        .send({ success: false, message: "Err updating balance" });
+    }
+    // saving wallet history
+    const newHistory = new walletHistoryModel({
+      orderId: orderId,
+      email: customerEmail,
+      mobile: customerMobile,
+      balanceBefore: user?.balance,
+      balanceAfter: newBalance,
+      amount: productPrice,
+      product: pack.amount,
+      type: "order",
+    });
+    await newHistory.save();
+
     const uid = process.env.UID;
     const email = process.env.EMAIL;
     const product = "mobilelegends";
@@ -514,36 +544,6 @@ router.post("/wallet", authMiddleware, async (req, res) => {
     }
 
     if (orderResponse.data.status === 200) {
-      // update user balance
-      const updateBalance = await userModel.findOneAndUpdate(
-        {
-          email: customerEmail,
-        },
-        {
-          $set: {
-            balance: newBalance,
-          },
-        },
-        { new: true }
-      );
-      // if (!updateBalance) {
-      //   return res
-      //     .status(201)
-      //     .send({ success: false, message: "Err updating balance" });
-      // }
-      // saving wallet history
-      const newHistory = new walletHistoryModel({
-        orderId: orderId,
-        email: customerEmail,
-        mobile: customerMobile,
-        balanceBefore: user?.balance,
-        balanceAfter: newBalance,
-        amount: productPrice,
-        product: pack.amount,
-        type: "order",
-      });
-      await newHistory.save();
-
       const order = new orderModel({
         api: "yes",
         orderId: orderId,
