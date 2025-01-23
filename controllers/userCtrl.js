@@ -165,6 +165,8 @@ const mobileOtpController = async (req, res) => {
     const otp = generateOTP(6);
     const smsResponse = await sendSMS(mobile, otp);
 
+    console.log(smsResponse);
+
     if (!smsResponse.success) {
       return res.status(500).send({
         success: false,
