@@ -131,7 +131,28 @@ const loginController = async (req, res) => {
 
 const mobileOtpController = async (req, res) => {
   try {
-    const { mobile } = req.body;
+    const { mobile, ip, deviceId } = req.body;
+
+    if (!deviceId) {
+      return res.status(201).send({
+        success: false,
+        message: "Something went wrong",
+      });
+    }
+
+    // Check if there are multiple entries with the same IP and Device ID but different mobile numbers
+    const usersWithSameIpAndDevice = await userModel.find({
+      ip: ip,
+      deviceId: deviceId,
+      mobile: { $ne: mobile }, // Exclude the current mobile number
+    });
+
+    if (usersWithSameIpAndDevice.length > 0) {
+      return res.status(201).send({
+        success: false,
+        message: "OTP cannot be sent.",
+      });
+    }
 
     let user = await userModel.findOne({ mobile: mobile });
 
@@ -174,8 +195,8 @@ const mobileOtpController = async (req, res) => {
 
     const updatedUser = await userModel.findOneAndUpdate(
       { mobile: mobile },
-      { $set: { mobileOtp: otp } },
-      { new: true, upsert: true } // Upsert to create if not found
+      { $set: { mobileOtp: otp, ip: ip, deviceId: deviceId } },
+      { new: true, upsert: true }
     );
 
     // Set emailOtpCreatedAt to null after 60 seconds

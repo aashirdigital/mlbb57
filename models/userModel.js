@@ -58,6 +58,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "no",
     },
+    ip: {
+      type: String,
+    },
+    deviceId: {
+      type: String,
+    },
   },
   {
     timestamps: true,

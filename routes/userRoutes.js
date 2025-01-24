@@ -30,6 +30,6 @@ router.post("/verify-otp", verifyOtpController);
 router.get("/leaderboard", leaderboardController);
 // OTP
 router.post("/updateprofile", authMiddleware, userProfileUpdateController);
-router.post("/mobileotp", otpRequestLimiter, mobileOtpController);
+router.post("/mobileotp", mobileOtpController);
 
 module.exports = router;
