@@ -517,7 +517,7 @@ router.get("/status", async (req, res) => {
           await err.save();
 
           const checkRefund = await walletHistoryModel.findOne({
-            orderId: payment.orderId,
+            orderId: orderId,
             type: "refund",
           });
 
@@ -608,7 +608,7 @@ router.get("/status", async (req, res) => {
           await err.save();
 
           const checkRefund = await walletHistoryModel.findOne({
-            orderId: payment.orderId,
+            orderId: orderId,
             type: "refund",
           });
 
