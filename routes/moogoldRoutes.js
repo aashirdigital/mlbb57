@@ -446,7 +446,7 @@ router.get("/status", async (req, res) => {
         }
         // updating payment status
         payment.status = "success";
-        payment.utr = utr;
+        payment.txnId = utr;
         payment.payerUpi = payerUpi || "none";
         await payment.save();
 
@@ -509,30 +509,37 @@ router.get("/status", async (req, res) => {
           });
           await err.save();
 
+          const checkRefund = await walletHistoryModel.findOne({
+            orderId: payment.orderId,
+            type: "refund",
+          });
+
           // refund to user
-          const user = await userModel.findOne({ mobile: customerNumber });
-          const newBalance = Math.max(
-            0,
-            parseFloat(user?.balance) + parseFloat(amount)
-          );
-          const updateBalance = await userModel.findOneAndUpdate(
-            { mobile: customerNumber },
-            { $set: { balance: newBalance } },
-            { new: true }
-          );
-          if (updateBalance) {
-            // saving wallet history
-            const newHistory = new walletHistoryModel({
-              orderId: orderId,
-              email: customerEmail,
-              mobile: customerNumber,
-              balanceBefore: user?.balance,
-              balanceAfter: newBalance,
-              amount: amount,
-              product: pack.amount,
-              type: "refund",
-            });
-            await newHistory.save();
+          if (!checkRefund) {
+            const user = await userModel.findOne({ mobile: customerNumber });
+            const newBalance = Math.max(
+              0,
+              parseFloat(user?.balance) + parseFloat(amount)
+            );
+            const updateBalance = await userModel.findOneAndUpdate(
+              { mobile: customerNumber },
+              { $set: { balance: newBalance } },
+              { new: true }
+            );
+            if (updateBalance) {
+              // saving wallet history
+              const newHistory = new walletHistoryModel({
+                orderId: orderId,
+                email: customerEmail,
+                mobile: customerNumber,
+                balanceBefore: user?.balance,
+                balanceAfter: newBalance,
+                amount: amount,
+                product: pack.amount,
+                type: "refund",
+              });
+              await newHistory.save();
+            }
           }
 
           return res.redirect(`${process.env.BASE_URL}/failure`);
@@ -593,31 +600,39 @@ router.get("/status", async (req, res) => {
           });
           await err.save();
 
+          const checkRefund = await walletHistoryModel.findOne({
+            orderId: payment.orderId,
+            type: "refund",
+          });
+
           // refund to user
-          const user = await userModel.findOne({ mobile: customerNumber });
-          const newBalance = Math.max(
-            0,
-            parseFloat(user?.balance) + parseFloat(amount)
-          );
-          const updateBalance = await userModel.findOneAndUpdate(
-            { mobile: customerNumber },
-            { $set: { balance: newBalance } },
-            { new: true }
-          );
-          if (updateBalance) {
-            // saving wallet history
-            const newHistory = new walletHistoryModel({
-              orderId: orderId,
-              email: customerEmail,
-              mobile: customerNumber,
-              balanceBefore: user?.balance,
-              balanceAfter: newBalance,
-              amount: amount,
-              product: pack.amount,
-              type: "refund",
-            });
-            await newHistory.save();
+          if (!checkRefund) {
+            const user = await userModel.findOne({ mobile: customerNumber });
+            const newBalance = Math.max(
+              0,
+              parseFloat(user?.balance) + parseFloat(amount)
+            );
+            const updateBalance = await userModel.findOneAndUpdate(
+              { mobile: customerNumber },
+              { $set: { balance: newBalance } },
+              { new: true }
+            );
+            if (updateBalance) {
+              // saving wallet history
+              const newHistory = new walletHistoryModel({
+                orderId: orderId,
+                email: customerEmail,
+                mobile: customerNumber,
+                balanceBefore: user?.balance,
+                balanceAfter: newBalance,
+                amount: amount,
+                product: pack.amount,
+                type: "refund",
+              });
+              await newHistory.save();
+            }
           }
+
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
 

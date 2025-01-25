@@ -183,32 +183,40 @@ async function checkPaymentStatus() {
           { orderId: payment.orderId },
           { $set: { status: "success", txnId: data.utr } }
         );
-        const user = await userModel.findOne({
-          email: data.customerEmail,
+
+        const checkRefund = await walletHistoryModel.findOne({
+          orderId: payment.orderId,
+          type: "refund",
         });
-        const newBalance = Math.max(
-          0,
-          parseFloat(user?.balance) + parseFloat(data.amount)
-        );
-        if (user) {
-          await userModel.findOneAndUpdate(
-            { email: data.customerEmail },
-            { $set: { balance: newBalance } },
-            { new: true }
-          );
-          // saving history
-          const newHistory = new walletHistoryModel({
-            orderId: payment.orderId,
+
+        if (!checkRefund) {
+          const user = await userModel.findOne({
             email: data.customerEmail,
-            mobile: data.customerNumber,
-            balanceBefore: user?.balance,
-            balanceAfter: newBalance,
-            amount: data.amount,
-            product: payment.pname,
-            type: "refund",
           });
-          await newHistory.save();
-          console.log("balance updated");
+          const newBalance = Math.max(
+            0,
+            parseFloat(user?.balance) + parseFloat(data.amount)
+          );
+          if (user) {
+            await userModel.findOneAndUpdate(
+              { email: data.customerEmail },
+              { $set: { balance: newBalance } },
+              { new: true }
+            );
+            // saving history
+            const newHistory = new walletHistoryModel({
+              orderId: payment.orderId,
+              email: data.customerEmail,
+              mobile: data.customerNumber,
+              balanceBefore: user?.balance,
+              balanceAfter: newBalance,
+              amount: data.amount,
+              product: payment.pname,
+              type: "refund",
+            });
+            await newHistory.save();
+            console.log("balance updated");
+          }
         }
       }
     }
@@ -313,7 +321,7 @@ router.get("/status", async (req, res) => {
         }
         // updating payment status
         payment.status = "success";
-        payment.utr = utr;
+        payment.txnId = utr;
         payment.payerUpi = payerUpi || "none";
         await payment.save();
 

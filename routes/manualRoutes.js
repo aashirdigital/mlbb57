@@ -161,7 +161,7 @@ router.get("/status", async (req, res) => {
         }
         // updating payment status
         payment.status = "success";
-        payment.utr = utr;
+        payment.txnId = utr;
         payment.payerUpi = payerUpi || "none";
         await payment.save();
 
