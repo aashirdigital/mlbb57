@@ -74,33 +74,40 @@ const checkAndProcessRefunds = async () => {
           });
 
           if (user) {
-            const newBalance =
-              parseFloat(user.balance) +
-              parseFloat(order.discountedPrice || order?.price);
-            await userModel.findOneAndUpdate(
-              { mobile: order.customer_mobile },
-              { $set: { balance: newBalance } },
-              { new: true }
-            );
-            // Update order status to refunded
-            await orderModel.findOneAndUpdate(
-              { orderId: order.orderId },
-              { $set: { status: "refunded" } },
-              { new: true }
-            );
-
-            // Save wallet history
-            const history = new walletHistoryModel({
+            const checkRefund = await walletHistoryModel.findOne({
               orderId: order.orderId,
-              email: order.customer_email,
-              mobile: order.customer_mobile,
-              balanceBefore: user.balance,
-              balanceAfter: newBalance,
-              amount: order.discountedPrice,
-              product: order.pname,
               type: "refund",
             });
-            await history.save();
+
+            if (!checkRefund) {
+              const newBalance =
+                parseFloat(user.balance) +
+                parseFloat(order.discountedPrice || order?.price);
+              await userModel.findOneAndUpdate(
+                { mobile: order.customer_mobile },
+                { $set: { balance: newBalance } },
+                { new: true }
+              );
+              // Update order status to refunded
+              await orderModel.findOneAndUpdate(
+                { orderId: order.orderId },
+                { $set: { status: "refunded" } },
+                { new: true }
+              );
+
+              // Save wallet history
+              const history = new walletHistoryModel({
+                orderId: order.orderId,
+                email: order.customer_email,
+                mobile: order.customer_mobile,
+                balanceBefore: user.balance,
+                balanceAfter: newBalance,
+                amount: order.discountedPrice,
+                product: order.pname,
+                type: "refund",
+              });
+              await history.save();
+            }
           }
         } else if (order_status === "completed") {
           // Update order status to refunded
