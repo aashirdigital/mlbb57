@@ -7,6 +7,7 @@ const sendMail = require("./sendMail");
 const sendSMS = require("./sendSMS");
 const crypto = require("crypto");
 const moment = require("moment-timezone");
+const CryptoJS = require("crypto-js");
 
 // generate OTP
 function generateOTP(digits) {
@@ -30,7 +31,26 @@ const iv = crypto.randomBytes(16);
 
 const loginController = async (req, res) => {
   try {
-    const { mobile } = req.body;
+    const { tokenn, ip, deviceId } = req.body;
+
+    if (!tokenn) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid request",
+      });
+    }
+
+    // Decrypt the mobile number
+    const secretKey = process.env.SERVER_SECRET; // Save the secret key in the server .env file
+    const bytes = CryptoJS.AES.decrypt(tokenn, secretKey);
+    const mobile = bytes.toString(CryptoJS.enc.Utf8);
+
+    if (!mobile || mobile.length !== 10) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid mobile number",
+      });
+    }
 
     let user = await userModel.findOne({ mobile: mobile });
 
@@ -131,26 +151,24 @@ const loginController = async (req, res) => {
 
 const mobileOtpController = async (req, res) => {
   try {
-    const { mobile, ip, deviceId } = req.body;
+    const { token, ip, deviceId } = req.body;
 
-    if (!deviceId) {
-      return res.status(201).send({
+    if (!token) {
+      return res.status(400).send({
         success: false,
-        message: "Something went wrong",
+        message: "Invalid request",
       });
     }
 
-    // Check if there are multiple entries with the same IP and Device ID but different mobile numbers
-    const usersWithSameIpAndDevice = await userModel.find({
-      ip: ip,
-      deviceId: deviceId,
-      mobile: { $ne: mobile }, // Exclude the current mobile number
-    });
+    // Decrypt the mobile number
+    const secretKey = process.env.SERVER_SECRET; // Save the secret key in the server .env file
+    const bytes = CryptoJS.AES.decrypt(token, secretKey);
+    const mobile = bytes.toString(CryptoJS.enc.Utf8);
 
-    if (usersWithSameIpAndDevice.length > 0) {
-      return res.status(201).send({
+    if (!mobile || mobile.length !== 10) {
+      return res.status(400).send({
         success: false,
-        message: "OTP cannot be sent.",
+        message: "Invalid mobile number",
       });
     }
 

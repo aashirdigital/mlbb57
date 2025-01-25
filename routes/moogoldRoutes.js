@@ -72,6 +72,7 @@ const checkAndProcessRefunds = async () => {
           const user = await userModel.findOne({
             mobile: order.customer_mobile,
           });
+
           if (user) {
             const newBalance =
               parseFloat(user.balance) +
@@ -81,11 +82,11 @@ const checkAndProcessRefunds = async () => {
               { $set: { balance: newBalance } },
               { new: true }
             );
-
             // Update order status to refunded
             await orderModel.findOneAndUpdate(
-              { _id: order._id },
-              { $set: { status: "refunded" } }
+              { orderId: order.orderId },
+              { $set: { status: "refunded" } },
+              { new: true }
             );
 
             // Save wallet history
@@ -497,7 +498,7 @@ router.get("/status", async (req, res) => {
           // updating order status
           const updateOrder = await orderModel.findOneAndUpdate(
             { orderId: orderId },
-            { $set: { status: "failed" } },
+            { $set: { status: "refunded" } },
             { new: true }
           );
 
@@ -507,6 +508,32 @@ router.get("/status", async (req, res) => {
             message: moogold.data.err_message,
           });
           await err.save();
+
+          // refund to user
+          const user = await userModel.findOne({ mobile: customerNumber });
+          const newBalance = Math.max(
+            0,
+            parseFloat(user?.balance) + parseFloat(amount)
+          );
+          const updateBalance = await userModel.findOneAndUpdate(
+            { mobile: customerNumber },
+            { $set: { balance: newBalance } },
+            { new: true }
+          );
+          if (updateBalance) {
+            // saving wallet history
+            const newHistory = new walletHistoryModel({
+              orderId: orderId,
+              email: customerEmail,
+              mobile: customerNumber,
+              balanceBefore: user?.balance,
+              balanceAfter: newBalance,
+              amount: amount,
+              product: pack.amount,
+              type: "refund",
+            });
+            await newHistory.save();
+          }
 
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
@@ -555,15 +582,42 @@ router.get("/status", async (req, res) => {
           // updating order status
           const updateOrder = await orderModel.findOneAndUpdate(
             { orderId: orderId },
-            { $set: { status: "failed" } },
+            { $set: { status: "refunded" } },
             { new: true }
           );
+
           const err = new errModel({
             orderId: orderId,
             error: response.data.err_code,
             message: response.data.err_message,
           });
           await err.save();
+
+          // refund to user
+          const user = await userModel.findOne({ mobile: customerNumber });
+          const newBalance = Math.max(
+            0,
+            parseFloat(user?.balance) + parseFloat(amount)
+          );
+          const updateBalance = await userModel.findOneAndUpdate(
+            { mobile: customerNumber },
+            { $set: { balance: newBalance } },
+            { new: true }
+          );
+          if (updateBalance) {
+            // saving wallet history
+            const newHistory = new walletHistoryModel({
+              orderId: orderId,
+              email: customerEmail,
+              mobile: customerNumber,
+              balanceBefore: user?.balance,
+              balanceAfter: newBalance,
+              amount: amount,
+              product: pack.amount,
+              type: "refund",
+            });
+            await newHistory.save();
+          }
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
 
@@ -694,35 +748,6 @@ router.post("/wallet", authMiddleware, async (req, res) => {
       0,
       parseFloat(user?.balance) - parseFloat(productPrice)
     );
-    const updateBalance = await userModel.findOneAndUpdate(
-      {
-        email: customerEmail,
-      },
-      {
-        $set: {
-          balance: newBalance,
-        },
-      },
-      { new: true }
-    );
-    if (!updateBalance) {
-      return res
-        .status(201)
-        .send({ success: false, message: "Err updating balance" });
-    }
-
-    // saving wallet history
-    const newHistory = new walletHistoryModel({
-      orderId: orderId,
-      email: customerEmail,
-      mobile: customerNumber,
-      balanceBefore: user?.balance,
-      balanceAfter: newBalance,
-      amount: productPrice,
-      product: pack.amount,
-      type: "order",
-    });
-    await newHistory.save();
 
     // GETTING PAYLOAD STARTS
     const fieldsPayload = {
@@ -849,6 +874,32 @@ router.post("/wallet", authMiddleware, async (req, res) => {
       await err.save();
 
       return res.status(201).send({ success: false, message: "Order Failed" });
+    }
+
+    const updateBalance = await userModel.findOneAndUpdate(
+      {
+        email: customerEmail,
+      },
+      {
+        $set: {
+          balance: newBalance,
+        },
+      },
+      { new: true }
+    );
+    if (updateBalance) {
+      // saving wallet history
+      const newHistory = new walletHistoryModel({
+        orderId: orderId,
+        email: customerEmail,
+        mobile: customerNumber,
+        balanceBefore: user?.balance,
+        balanceAfter: newBalance,
+        amount: productPrice,
+        product: pack.amount,
+        type: "order",
+      });
+      await newHistory.save();
     }
 
     const order = new orderModel({

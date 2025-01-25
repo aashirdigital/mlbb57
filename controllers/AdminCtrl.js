@@ -442,6 +442,21 @@ const deleteCouponController = async (req, res) => {
 const adminAddMoneyController = async (req, res) => {
   try {
     const { orderId, email, mobile, amount, type, reason } = req.body;
+
+    if (!email || !mobile) {
+      return res
+        .status(201)
+        .send({ success: false, message: "Please enter Email/Mobile" });
+    }
+    if (!amount || !type) {
+      return res
+        .status(201)
+        .send({
+          success: false,
+          message: "Please check amount/type is missing",
+        });
+    }
+
     const user = await userModel.findOne({ mobile: mobile });
     if (!user) {
       return res

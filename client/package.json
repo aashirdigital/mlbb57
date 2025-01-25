@@ -22,6 +22,7 @@
     "chart.js": "^4.4.2",
     "country-state-city": "^3.2.1",
     "crypto-js": "^4.2.0",
+    "dotenv": "^16.4.7",
     "firebase": "^10.5.0",
     "otp-input-react": "^0.3.0",
     "quill": "^2.0.2",

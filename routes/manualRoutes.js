@@ -207,12 +207,12 @@ router.get("/status", async (req, res) => {
           let mailTransporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
-              user: process.env.SENDING_EMAIL,
-              pass: process.env.MAIL_PASS,
+              user: process.env.MAIL,
+              pass: process.env.APP_PASSWORD,
             },
           });
           let mailDetails = {
-            from: process.env.SENDING_EMAIL,
+            from: process.env.MAIL,
             to: `${order.customer_email}`,
             subject: "Order Successful!",
             html: htmlContent,
@@ -403,12 +403,12 @@ router.post("/wallet", authMiddleware, async (req, res) => {
       let mailTransporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
-          user: process.env.SENDING_EMAIL,
-          pass: process.env.MAIL_PASS,
+          user: process.env.MAIL,
+          pass: process.env.APP_PASSWORD,
         },
       });
       let mailDetails = {
-        from: process.env.SENDING_EMAIL,
+        from: process.env.MAIL,
         to: `${customer_email}`,
         subject: "Order Successful!",
         html: htmlContent,
