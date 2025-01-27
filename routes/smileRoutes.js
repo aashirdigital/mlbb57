@@ -22,14 +22,19 @@ async function updatePendingOrdersToFailed() {
     const result = await orderModel.updateMany(
       {
         $or: [
-          { apiName: "smileOne", api: "yes", status: "pending" },
+          {
+            apiName: "smileOne",
+            status: "pending",
+            $or: [{ sid: null }, { sid: { $exists: false } }],
+          },
           {
             apiName: "moogold",
+            status: "processing",
             $or: [{ mid: null }, { mid: { $exists: false } }],
           },
         ],
       },
-      { $set: { status: "failed" } },
+      { $set: { status: "refunded" } },
       { new: true }
     );
     console.log(`Updated ${result.modifiedCount} orders to 'failed' status.`);
@@ -38,7 +43,7 @@ async function updatePendingOrdersToFailed() {
   }
 }
 
-cron.schedule("*/5 * * * *", updatePendingOrdersToFailed);
+// cron.schedule("*/5 * * * *", updatePendingOrdersToFailed);
 // barcode
 router.post("/create", authMiddleware, async (req, res) => {
   try {
@@ -186,8 +191,8 @@ router.get("/status", async (req, res) => {
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
         // updating payment status
-        payment.status = "success";
         payment.txnId = utr;
+        payment.status = "success";
         payment.payerUpi = payerUpi || "none";
         await payment.save();
 
