@@ -716,7 +716,6 @@ router.post("/wallet", authMiddleware, async (req, res) => {
     if (
       !orderId ||
       !userid ||
-      !zoneid ||
       !prodId ||
       !customerEmail ||
       !customerNumber ||

@@ -67,7 +67,6 @@ router.post("/create", authMiddleware, async (req, res) => {
       !customerEmail ||
       !customerNumber ||
       !userid ||
-      !zoneid ||
       !prodId ||
       !productName
     ) {
@@ -412,7 +411,6 @@ router.post("/wallet", authMiddleware, async (req, res) => {
     if (
       !orderId ||
       !userid ||
-      !zoneid ||
       !region ||
       !prodId ||
       !customerEmail ||
