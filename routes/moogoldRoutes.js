@@ -331,7 +331,6 @@ router.post("/create", authMiddleware, async (req, res) => {
       !customerEmail ||
       !customerNumber ||
       !userid ||
-      !zoneid ||
       !prodId ||
       !productName
     ) {
