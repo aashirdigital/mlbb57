@@ -34,7 +34,7 @@ async function updatePendingOrdersToFailed() {
           },
         ],
       },
-      { $set: { status: "refunded" } },
+      { $set: { status: "failed" } },
       { new: true }
     );
     console.log(`Updated ${result.modifiedCount} orders to 'failed' status.`);
@@ -42,8 +42,7 @@ async function updatePendingOrdersToFailed() {
     console.error("Error updating orders:", error);
   }
 }
-
-// cron.schedule("*/5 * * * *", updatePendingOrdersToFailed);
+cron.schedule("*/5 * * * *", updatePendingOrdersToFailed);
 // barcode
 router.post("/create", authMiddleware, async (req, res) => {
   try {
