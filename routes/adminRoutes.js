@@ -19,6 +19,7 @@ const {
   AdminDashboardController,
   smileBalanceController,
   moogoldBalanceContoller,
+  deleteUserController,
 } = require("../controllers/AdminCtrl");
 const {
   verifySmileOrderController,
@@ -44,6 +45,7 @@ const upload = multer({ storage: storage });
 router.get("/get-all-users", adminAuthMiddleware, getAllUserController);
 router.post("/get-user", adminAuthMiddleware, getUserController);
 router.post("/admin-edit-user", adminAuthMiddleware, editUserController);
+router.post("/deleteuser", adminAuthMiddleware, deleteUserController);
 // ============== ORDERS
 router.get(
   "/admin-get-all-orders",

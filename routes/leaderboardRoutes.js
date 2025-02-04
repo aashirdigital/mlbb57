@@ -12,19 +12,24 @@ const router = express.Router();
 const saveLeaderboardData = async () => {
   try {
     const now = new Date();
-    const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const startDate = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
+    );
+    const endDate = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)
+    );
     const currentDate = now.toISOString().split("T")[0];
-    // Check if today is the last day of the month
-    // if (currentDate !== endDate) {
-    //   console.log("Today is not the last day of the month. Skipping save.");
-    //   return;
-    // }
+    const endDateStr = endDate.toISOString().split("T")[0];
 
-    // fetching rewards
+    console.log(startDate);
+    console.log(endDateStr);
+
+    if (currentDate !== endDateStr) {
+      console.log("Today is not the last day of the month. Skipping save.");
+      return;
+    }
+
     const rewards = await rewardModel.find({});
-
-    // Fetch leaderboard data
     const topUsers = await orderModel.aggregate([
       {
         $match: {
@@ -38,7 +43,16 @@ const saveLeaderboardData = async () => {
       {
         $group: {
           _id: "$customer_email",
-          totalSpent: { $sum: { $toDouble: "$price" } },
+          totalSpent: {
+            $sum: {
+              $convert: {
+                input: "$price",
+                to: "double",
+                onError: 0,
+                onNull: 0,
+              },
+            },
+          },
         },
       },
       {
@@ -62,18 +76,17 @@ const saveLeaderboardData = async () => {
         $project: {
           totalSpent: 1,
           fname: "$userInfo.fname",
+          email: "$userInfo.email",
+          mobile: "$userInfo.mobile",
           _id: 0,
         },
       },
     ]);
 
-    // Prepare the winners array with prizes
     const winners = topUsers.map((item, index) => {
-      // Find the reward for the current position
       const rewardForPosition = rewards.find(
         (reward) => reward.position === (index + 1).toString()
       );
-      // If no reward is found for the current position, use the last available reward
       const prize = rewardForPosition
         ? rewardForPosition.reward
         : rewards[rewards.length - 1]?.reward || "No Prize";
@@ -82,6 +95,8 @@ const saveLeaderboardData = async () => {
         fname: item.fname.replace("@gmail.com", ""),
         score: item.totalSpent, // Ensure the score field exists in the API response
         prize,
+        email: item.email,
+        mobile: item.mobile,
       };
     });
 
@@ -99,8 +114,9 @@ const saveLeaderboardData = async () => {
   }
 };
 
-// Schedule the function to run at 23:59 on the last day of every month
-nodeCron.schedule("59 23 28-31 * *", async () => {
+// saveLeaderboardData();
+
+nodeCron.schedule("57 23 * * *", async () => {
   const now = new Date();
   const lastDayOfMonth = new Date(
     now.getFullYear(),

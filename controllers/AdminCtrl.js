@@ -121,7 +121,7 @@ const editUserController = async (req, res) => {
         balanceBefore: user?.balance,
         balanceAfter: parseInt(user?.balance) + parseInt(req.body.balance),
         amount: amountString,
-        product: "Admin",
+        product: "By Admin",
         type: type,
         admin: true,
       });
@@ -146,6 +146,37 @@ const editUserController = async (req, res) => {
         .status(201)
         .send({ success: true, message: "User Updated Successfully" });
     }
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).send({
+      success: false,
+      message: `Admin Edit User Ctrl ${error.message}`,
+    });
+  }
+};
+
+const deleteUserController = async (req, res) => {
+  try {
+    const { id } = req.body;
+    if (!id) {
+      return res.status(400).send({
+        success: false,
+        message: "Id is required in the request body",
+      });
+    }
+    const user = await userModel.findOne({ _id: req.body.id });
+    if (!user) {
+      return res.status(201).send({ success: false, message: "No user found" });
+    }
+    const deleteUser = await userModel.findOneAndDelete({ _id: req.body.id });
+    if (!deleteUser) {
+      return res
+        .status(201)
+        .send({ success: false, message: "Failed to delete user" });
+    }
+    return res
+      .status(201)
+      .send({ success: true, message: "User Deleted Successfully" });
   } catch (error) {
     console.log(error.message);
     return res.status(500).send({
@@ -449,12 +480,10 @@ const adminAddMoneyController = async (req, res) => {
         .send({ success: false, message: "Please enter Email/Mobile" });
     }
     if (!amount || !type) {
-      return res
-        .status(201)
-        .send({
-          success: false,
-          message: "Please check amount/type is missing",
-        });
+      return res.status(201).send({
+        success: false,
+        message: "Please check amount/type is missing",
+      });
     }
 
     const user = await userModel.findOne({ mobile: mobile });
@@ -790,6 +819,7 @@ module.exports = {
   getAllUserController,
   getUserController,
   editUserController,
+  deleteUserController,
   adminGetAllOrdersController,
   adminUpdateOrderController,
   addCouponController,

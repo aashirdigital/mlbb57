@@ -15,8 +15,6 @@ const nodemailer = require("nodemailer");
 const router = express.Router();
 const cron = require("node-cron");
 
-// mg api mid null rhega to fail krna h
-// smile sid null rhega to fail krna h
 async function updatePendingOrdersToFailed() {
   try {
     const result = await orderModel.updateMany(
