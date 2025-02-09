@@ -251,7 +251,7 @@ router.post("/addmoney", authMiddleware, async (req, res) => {
         customerName,
         customerEmail,
         customerNumber,
-        redirectUrl: `https://coinsup.in/api/wallet/status`,
+        redirectUrl: `https://coinsup.in/api/wallet/status?orderId=${orderId}`,
       }
     );
 
@@ -315,24 +315,24 @@ router.get("/status", async (req, res) => {
           payerUpi,
         } = data;
 
-        const payment = await paymentModel.findOne({ orderId: orderId });
+        const payment = await paymentModel.findOne({
+          orderId: orderId,
+        });
         if (!payment) {
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
         // updating payment status
         payment.status = "success";
-        payment.txnId = utr;
+        payment.txnId = utr || "none";
         payment.payerUpi = payerUpi || "none";
         await payment.save();
 
         const user = await userModel.findOne({
           email: customerEmail,
         });
-
         if (!user) {
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
-
         // udpating user balance
         const updatedUser = await userModel.findOneAndUpdate(
           { email: customerEmail },

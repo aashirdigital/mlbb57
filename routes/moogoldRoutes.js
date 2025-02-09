@@ -444,6 +444,7 @@ router.get("/status", async (req, res) => {
           customerNumber,
           amount,
           utr,
+          payerUpi,
         } = data;
 
         const payment = await paymentModel.findOne({ orderId: orderId });
