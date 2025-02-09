@@ -251,18 +251,18 @@ router.post("/addmoney", authMiddleware, async (req, res) => {
         customerName,
         customerEmail,
         customerNumber,
-        redirectUrl: `https://coinsup.in/api/wallet/status?orderId=${orderId}`,
+        redirectUrl: `https://coinsup.in/api/wallet/status`,
       }
     );
 
     if (response.data && response.data.success) {
       // saving payment
       const paymentObject = {
+        orderId: orderId,
         name: customerName,
         email: customerEmail,
         mobile: customerNumber,
         amount: amount,
-        orderId: orderId,
         status: "pending",
         type: "wallet",
         pname: "Wallet Topup",
@@ -285,12 +285,16 @@ router.get("/status", async (req, res) => {
   try {
     const { orderId } = req.query;
 
+    console.log(orderId);
+
     const existingPayment = await paymentModel.findOne({
       orderId: orderId,
     });
     if (existingPayment) {
       return res.redirect(`${process.env.BASE_URL}/failure`);
     }
+
+    console.log(existingPayment);
 
     const paymentResponse = await axios.post(
       "https://pay.onegateway.in/payment/status",
@@ -299,6 +303,8 @@ router.get("/status", async (req, res) => {
         orderId: orderId,
       }
     );
+
+    console.log(paymentResponse.data);
 
     // Check if the order ID is found
     if (paymentResponse.data.success) {
@@ -327,6 +333,8 @@ router.get("/status", async (req, res) => {
         payment.payerUpi = payerUpi || "none";
         await payment.save();
 
+        console.log("payment saved");
+
         const user = await userModel.findOne({
           email: customerEmail,
         });
@@ -334,21 +342,23 @@ router.get("/status", async (req, res) => {
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
         // udpating user balance
+
+        const newBalance = Math.max(
+          0,
+          parseFloat(user?.balance) + parseFloat(data.amount)
+        );
         const updatedUser = await userModel.findOneAndUpdate(
           { email: customerEmail },
           {
             $set: {
-              balance: parseFloat(user.balance) + parseFloat(data.amount),
+              balance: newBalance,
             },
           },
           { new: true }
         );
         if (updatedUser) {
+          console.log("balance updated");
           // saving wallet history
-          const newBalance = Math.max(
-            0,
-            parseFloat(user?.balance) + parseFloat(data.amount)
-          );
           const newHistory = new walletHistoryModel({
             orderId: orderId,
             email: customerEmail,
@@ -360,6 +370,8 @@ router.get("/status", async (req, res) => {
             type: "addmoney",
           });
           await newHistory.save();
+
+          console.log("history saved");
 
           return res.redirect(`${process.env.BASE_URL}/success`);
         }
