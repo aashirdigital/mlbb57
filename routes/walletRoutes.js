@@ -289,12 +289,16 @@ router.get("/status", async (req, res) => {
 
     const existingPayment = await paymentModel.findOne({
       orderId: orderId,
+      status: "success",
     });
+
+    console.log(existingPayment);
+
     if (existingPayment) {
       return res.redirect(`${process.env.BASE_URL}/failure`);
     }
 
-    console.log(existingPayment);
+    console.log("payment found");
 
     const paymentResponse = await axios.post(
       "https://pay.onegateway.in/payment/status",
