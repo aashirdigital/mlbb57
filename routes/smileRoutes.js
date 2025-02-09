@@ -182,8 +182,11 @@ router.get("/status", async (req, res) => {
           payerUpi,
         } = data;
 
-        const payment = await paymentModel.findOne({ orderId: orderId });
-        if (!payment) {
+        const payment = await paymentModel.findOne({
+          orderId: orderId,
+          status: "success",
+        });
+        if (payment) {
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
         // updating payment status
