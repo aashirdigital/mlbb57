@@ -168,7 +168,6 @@ async function checkPaymentStatus() {
         }
       );
       const data = paymentResponse.data.data;
-      console.log(data);
       // UPDATING STATUS
       if (data.status === "failed") {
         await paymentModel.findOneAndUpdate(
@@ -222,7 +221,7 @@ async function checkPaymentStatus() {
     }
     console.log("No pending payment found");
   } catch (error) {
-    console.error("Error updating orders:", error);
+    console.error("Error updating orders:", error.message);
   }
 }
 cron.schedule("*/5 * * * *", checkPaymentStatus);

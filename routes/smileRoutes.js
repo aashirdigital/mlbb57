@@ -189,11 +189,18 @@ router.get("/status", async (req, res) => {
         if (payment) {
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
-        // updating payment status
-        payment.txnId = utr;
-        payment.status = "success";
-        payment.payerUpi = payerUpi || "none";
-        await payment.save();
+
+        const updatePayment = await paymentModel.findOneAndUpdate(
+          { orderId: orderId },
+          {
+            $set: {
+              txnId: utr || "none",
+              status: "success",
+              payerUpi: payerUpi || "none",
+            },
+          },
+          { new: true }
+        );
 
         // searching order
         const order = await orderModel.findOne({ orderId: orderId });

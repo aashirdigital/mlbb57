@@ -395,9 +395,9 @@ router.post("/create", authMiddleware, async (req, res) => {
         mobile: customerNumber,
         amount: price,
         orderId: orderId,
-        status: "pending",
-        type: "order",
         pname: productName,
+        type: "order",
+        status: "pending",
       };
       const newPayment = new paymentModel(paymentObject);
       await newPayment.save();
@@ -443,8 +443,8 @@ router.get("/status", async (req, res) => {
           customerEmail,
           customerNumber,
           amount,
-          utr,
           payerUpi,
+          utr,
         } = data;
 
         const payment = await paymentModel.findOne({
@@ -454,11 +454,18 @@ router.get("/status", async (req, res) => {
         if (payment) {
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
-        // updating payment status
-        payment.status = "success";
-        payment.txnId = utr;
-        payment.payerUpi = payerUpi || "none";
-        await payment.save();
+
+        const updatePayment = await paymentModel.findOneAndUpdate(
+          { orderId: orderId },
+          {
+            $set: {
+              txnId: utr || "none",
+              status: "success",
+              payerUpi: payerUpi || "none",
+            },
+          },
+          { new: true }
+        );
 
         // searching order
         const order = await orderModel.findOne({ orderId: orderId });
