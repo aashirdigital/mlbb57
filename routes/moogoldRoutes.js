@@ -447,15 +447,15 @@ router.get("/status", async (req, res) => {
           utr,
         } = data;
 
-        const payment = await paymentModel.findOne({
-          orderId: orderId,
-          status: "success",
-        });
-        if (payment) {
-          return res.redirect(
-            `${process.env.BASE_URL}/failure/duplicatepayment`
-          );
-        }
+        // const payment = await paymentModel.findOne({
+        //   orderId: orderId,
+        //   status: "success",
+        // });
+        // if (payment) {
+        //   return res.redirect(
+        //     `${process.env.BASE_URL}/failure/duplicatepayment`
+        //   );
+        // }
 
         const updatePayment = await paymentModel.findOneAndUpdate(
           { orderId: orderId },
