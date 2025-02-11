@@ -224,6 +224,7 @@ async function checkPaymentStatus() {
     console.error("Error updating orders:", error.message);
   }
 }
+checkPaymentStatus();
 cron.schedule("*/5 * * * *", checkPaymentStatus);
 
 // add money to wallet
