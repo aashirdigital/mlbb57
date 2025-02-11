@@ -182,13 +182,13 @@ router.get("/status", async (req, res) => {
           payerUpi,
         } = data;
 
-        const payment = await paymentModel.findOne({
-          orderId: orderId,
-          status: "success",
-        });
-        if (payment) {
-          return res.redirect(`${process.env.BASE_URL}/failure`);
-        }
+        // const payment = await paymentModel.findOne({
+        //   orderId: orderId,
+        //   status: "success",
+        // });
+        // if (payment) {
+        //   return res.redirect(`${process.env.BASE_URL}/failure/duplicatepayment`);
+        // }
 
         const updatePayment = await paymentModel.findOneAndUpdate(
           { orderId: orderId },
@@ -205,27 +205,26 @@ router.get("/status", async (req, res) => {
         // searching order
         const order = await orderModel.findOne({ orderId: orderId });
         if (!order) {
-          return res.redirect(`${process.env.BASE_URL}/failure`);
+          return res.redirect(`${process.env.BASE_URL}/failure/ordernotfound`);
         }
 
         // searching product
         const prod = await productModel.findOne({ name: order.pname });
         if (!prod) {
-          return res.redirect(`${process.env.BASE_URL}/failure`);
+          return res.redirect(
+            `${process.env.BASE_URL}/failure/productnotfound`
+          );
         }
 
         // searching pack
         const pack = prod.cost.filter(
           (item) => item.prodId === order.prodId
         )[0];
+        if (!pack) {
+          return res.redirect(`${process.env.BASE_URL}/failure/packnotfound`);
+        }
 
         const productid = pack.id.split("&");
-        if (!pack) {
-          return res.status(201).send({
-            success: false,
-            message: "Error in finding pack",
-          });
-        }
 
         const uid = process.env.UID;
         const email = process.env.EMAIL;
