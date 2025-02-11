@@ -422,7 +422,7 @@ router.get("/status", async (req, res) => {
       status: "success",
     });
     if (existingOrder) {
-      return res.redirect(`${process.env.BASE_URL}/failure`);
+      return res.redirect(`${process.env.BASE_URL}/failure/duplicateorder`);
     }
 
     const paymentResponse = await axios.post(
@@ -452,7 +452,9 @@ router.get("/status", async (req, res) => {
           status: "success",
         });
         if (payment) {
-          return res.redirect(`${process.env.BASE_URL}/failure`);
+          return res.redirect(
+            `${process.env.BASE_URL}/failure/duplicatepayment`
+          );
         }
 
         const updatePayment = await paymentModel.findOneAndUpdate(
@@ -470,20 +472,24 @@ router.get("/status", async (req, res) => {
         // searching order
         const order = await orderModel.findOne({ orderId: orderId });
         if (!order) {
-          return res.redirect(`${process.env.BASE_URL}/failure`);
+          return res.redirect(`${process.env.BASE_URL}/failure/ordernotfound`);
         }
 
         // searching product
         const prod = await productModel.findOne({ name: order.pname });
         if (!prod) {
-          return res.redirect(`${process.env.BASE_URL}/failure`);
+          return res.redirect(
+            `${process.env.BASE_URL}/failure/productnotfound`
+          );
         }
-
         // searching pack
         const pack = prod.cost.filter(
           (item) => item.prodId === order.prodId
         )[0];
-        const productid = pack.id;
+        if (!pack) {
+          return res.redirect(`${process.env.BASE_URL}/failure/packnotfound`);
+        }
+        const productid = pack?.id;
 
         // GETTING PAYLOAD STARTS
         const fieldsPayload = {
@@ -558,7 +564,6 @@ router.get("/status", async (req, res) => {
               await newHistory.save();
             }
           }
-
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
         //? GETTING FIELDS END
