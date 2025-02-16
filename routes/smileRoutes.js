@@ -292,6 +292,7 @@ router.get("/status", async (req, res) => {
             discount: discount,
             region: paymentNote,
             sid: orderResponse?.data?.status,
+            loopCount: `${successLoopCount} out of ${productid.length}`,
             paymentMode: "onegateway",
             apiName: "smileOne",
             status: "success",
