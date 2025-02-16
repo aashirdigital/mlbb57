@@ -10,6 +10,7 @@ const session = require("express-session");
 const startCronJobs = require("./cronJobs");
 var cors = require("cors");
 
+
 // dotenv
 dotenv.config();
 //mongodb connection
@@ -18,6 +19,7 @@ connectDB();
 const app = express();
 app.use(cors());
 app.use(cookieParser());
+
 //START CRON JOBS
 startCronJobs();
 

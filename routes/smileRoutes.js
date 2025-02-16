@@ -86,23 +86,13 @@ router.post("/create", authMiddleware, async (req, res) => {
     const price = user?.reseller === "yes" ? pack?.resPrice : pack?.price;
 
     const orderData = {
-      api: "yes",
-      amount: pack.amount,
-      orderId,
       pname: productName,
-      price,
-      customer_email: customerEmail,
-      customer_mobile: customerNumber,
       userId: userid,
       zoneId: zoneid,
       prodId: prodId,
       inGameName: inGameName,
-      originalPrice: pack.buyingprice,
       discount,
-      region: paymentNote,
-      paymentMode: "onegateway",
-      apiName: "smileOne",
-      status: "pending",
+      region: paymentNote
     };
 
     // Convert order data into a URL query string
@@ -283,7 +273,7 @@ router.get("/status", async (req, res) => {
             );
           }
         }
-        console.log(orderResponse.data)
+
         if (orderResponse?.data?.status === 200) {
           // updating order status
           const order = new orderModel({
@@ -301,6 +291,7 @@ router.get("/status", async (req, res) => {
             originalPrice: pack.buyingprice,
             discount: discount,
             region: paymentNote,
+            sid: orderResponse?.data?.status,
             paymentMode: "onegateway",
             apiName: "smileOne",
             status: "success",

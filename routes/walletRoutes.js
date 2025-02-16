@@ -155,77 +155,85 @@ const router = express.Router();
 //   }
 // });
 
-async function checkPaymentStatus() {
-  try {
-    const payments = await paymentModel.find({ status: "pending" });
 
-    for (const payment of payments) {
-      const paymentResponse = await axios.post(
-        "https://pay.onegateway.in/payment/status",
-        {
-          apiKey: process.env.ONEGATEWAY_API_KEY,
-          orderId: payment.orderId,
-        }
-      );
-      const data = paymentResponse.data.data;
-      // UPDATING STATUS
-      if (data.status === "failed") {
-        await paymentModel.findOneAndUpdate(
-          { orderId: payment.orderId },
-          { $set: { status: "failed" } }
-        );
-        console.log("failed status updated");
-      }
-      // ADDING MONEY
-      if (data.status === "success") {
-        await paymentModel.findOneAndUpdate(
-          { orderId: payment.orderId },
-          { $set: { status: "success", txnId: data.utr } }
-        );
 
-        const checkRefund = await walletHistoryModel.findOne({
-          orderId: payment.orderId,
-          type: "refund",
-        });
 
-        if (!checkRefund) {
-          const user = await userModel.findOne({
-            email: data.customerEmail,
-          });
-          const newBalance = Math.max(
-            0,
-            parseFloat(user?.balance) + parseFloat(data.amount)
-          );
-          if (user) {
-            await userModel.findOneAndUpdate(
-              { email: data.customerEmail },
-              { $set: { balance: newBalance } },
-              { new: true }
-            );
-            // saving history
-            const newHistory = new walletHistoryModel({
-              orderId: payment.orderId,
-              email: data.customerEmail,
-              mobile: data.customerNumber,
-              balanceBefore: user?.balance,
-              balanceAfter: newBalance,
-              amount: data.amount,
-              product: payment.pname,
-              type: "refund",
-            });
-            await newHistory.save();
-            console.log("balance updated");
-          }
-        }
-      }
-    }
-    console.log("No pending payment found");
-  } catch (error) {
-    console.error("Error updating orders:", error.message);
-  }
-}
-checkPaymentStatus();
-cron.schedule("*/5 * * * *", checkPaymentStatus);
+
+// async function checkPaymentStatus() {
+//   try {
+//     const payments = await paymentModel.find({ status: "pending" });
+
+//     for (const payment of payments) {
+//       const paymentResponse = await axios.post(
+//         "https://pay.onegateway.in/payment/status",
+//         {
+//           apiKey: process.env.ONEGATEWAY_API_KEY,
+//           orderId: payment.orderId,
+//         }
+//       );
+//       const data = paymentResponse.data.data;
+//       // UPDATING STATUS
+//       if (data.status === "failed") {
+//         await paymentModel.findOneAndUpdate(
+//           { orderId: payment.orderId },
+//           { $set: { status: "failed" } }
+//         );
+//         console.log("failed status updated");
+//       }
+//       // ADDING MONEY
+//       if (data.status === "success") {
+//         await paymentModel.findOneAndUpdate(
+//           { orderId: payment.orderId },
+//           { $set: { status: "success", txnId: data.utr } }
+//         );
+
+//         const checkRefund = await walletHistoryModel.findOne({
+//           orderId: payment.orderId,
+//           type: "refund",
+//         });
+
+//         if (!checkRefund) {
+//           const user = await userModel.findOne({
+//             email: data.customerEmail,
+//           });
+//           const newBalance = Math.max(
+//             0,
+//             parseFloat(user?.balance) + parseFloat(data.amount)
+//           );
+//           if (user) {
+//             await userModel.findOneAndUpdate(
+//               { email: data.customerEmail },
+//               { $set: { balance: newBalance } },
+//               { new: true }
+//             );
+//             // saving history
+//             const newHistory = new walletHistoryModel({
+//               orderId: payment.orderId,
+//               email: data.customerEmail,
+//               mobile: data.customerNumber,
+//               balanceBefore: user?.balance,
+//               balanceAfter: newBalance,
+//               amount: data.amount,
+//               product: payment.pname,
+//               type: "refund",
+//             });
+//             await newHistory.save();
+//             console.log("balance updated");
+//           }
+//         }
+//       }
+//     }
+//     console.log("No pending payment found");
+//   } catch (error) {
+//     console.error("Error updating orders:", error.message);
+//   }
+// }
+// checkPaymentStatus();
+// cron.schedule("*/5 * * * *", checkPaymentStatus);
+
+
+
+
 
 // add money to wallet
 router.post("/addmoney", authMiddleware, async (req, res) => {

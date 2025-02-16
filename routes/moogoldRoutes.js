@@ -30,108 +30,113 @@ const generateAuthSignature = (payload, timestamp, path) => {
 // REFUND FUNCTION
 // REFUND FUNCTION
 // REFUND FUNCTION
-const checkAndProcessRefunds = async () => {
-  try {
-    const orders = await orderModel.find({
-      status: "processing",
-      apiName: "moogold",
-    });
+// const checkAndProcessRefunds = async () => {
+//   try {
+//     const orders = await orderModel.find({
+//       status: "processing",
+//       apiName: "moogold",
+//     });
 
-    for (const order of orders) {
-      const payload = {
-        path: "order/order_detail",
-        order_id: order.mid,
-      };
+//     for (const order of orders) {
+//       const payload = {
+//         path: "order/order_detail",
+//         order_id: order.mid,
+//       };
 
-      // Generate authorization
-      const timestamp = Math.floor(Date.now() / 1000);
-      const path = "order/order_detail";
-      const authSignature = crypto
-        .createHmac("sha256", process.env.MOOGOLD_SECRET)
-        .update(`${JSON.stringify(payload)}${timestamp}${path}`)
-        .digest("hex");
+//       // Generate authorization
+//       const timestamp = Math.floor(Date.now() / 1000);
+//       const path = "order/order_detail";
+//       const authSignature = crypto
+//         .createHmac("sha256", process.env.MOOGOLD_SECRET)
+//         .update(`${JSON.stringify(payload)}${timestamp}${path}`)
+//         .digest("hex");
 
-      try {
-        const response = await axios.post(
-          "https://moogold.com/wp-json/v1/api/order/order_detail",
-          payload,
-          {
-            headers: {
-              Authorization: generateBasicAuthHeader(),
-              auth: authSignature,
-              timestamp: timestamp,
-            },
-          }
-        );
+//       try {
+//         const response = await axios.post(
+//           "https://moogold.com/wp-json/v1/api/order/order_detail",
+//           payload,
+//           {
+//             headers: {
+//               Authorization: generateBasicAuthHeader(),
+//               auth: authSignature,
+//               timestamp: timestamp,
+//             },
+//           }
+//         );
 
-        console.log(response.data);
+//         console.log(response.data);
 
-        // Check the order status
-        const { order_status } = response.data;
-        if (order_status === "refunded") {
-          const user = await userModel.findOne({
-            mobile: order.customer_mobile,
-          });
+//         // Check the order status
+//         const { order_status } = response.data;
+//         if (order_status === "refunded") {
+//           const user = await userModel.findOne({
+//             mobile: order.customer_mobile,
+//           });
 
-          if (user) {
-            const checkRefund = await walletHistoryModel.findOne({
-              orderId: order.orderId,
-              type: "refund",
-            });
+//           if (user) {
+//             const checkRefund = await walletHistoryModel.findOne({
+//               orderId: order.orderId,
+//               type: "refund",
+//             });
 
-            if (!checkRefund) {
-              const newBalance =
-                parseFloat(user.balance) +
-                parseFloat(order.discountedPrice || order?.price);
-              await userModel.findOneAndUpdate(
-                { mobile: order.customer_mobile },
-                { $set: { balance: newBalance } },
-                { new: true }
-              );
-              // Update order status to refunded
-              await orderModel.findOneAndUpdate(
-                { orderId: order.orderId },
-                { $set: { status: "refunded" } },
-                { new: true }
-              );
+//             if (!checkRefund) {
+//               const newBalance =
+//                 parseFloat(user.balance) +
+//                 parseFloat(order.discountedPrice || order?.price);
+//               await userModel.findOneAndUpdate(
+//                 { mobile: order.customer_mobile },
+//                 { $set: { balance: newBalance } },
+//                 { new: true }
+//               );
+//               // Update order status to refunded
+//               await orderModel.findOneAndUpdate(
+//                 { orderId: order.orderId },
+//                 { $set: { status: "refunded" } },
+//                 { new: true }
+//               );
 
-              // Save wallet history
-              const history = new walletHistoryModel({
-                orderId: order.orderId,
-                email: order.customer_email,
-                mobile: order.customer_mobile,
-                balanceBefore: user.balance,
-                balanceAfter: newBalance,
-                amount: order.discountedPrice,
-                product: order.pname,
-                type: "refund",
-              });
-              await history.save();
-            }
-          }
-        } else if (order_status === "completed") {
-          // Update order status to refunded
-          await orderModel.findOneAndUpdate(
-            { _id: order._id },
-            { $set: { status: "success" } }
-          );
-        }
-      } catch (err) {
-        console.error(
-          `Error fetching order details for ${order.orderId}:`,
-          err.message
-        );
-      }
-    }
-    console.log("Refund job completed.");
-  } catch (err) {
-    console.error("Error in refund job:", err.message);
-  }
-};
+//               // Save wallet history
+//               const history = new walletHistoryModel({
+//                 orderId: order.orderId,
+//                 email: order.customer_email,
+//                 mobile: order.customer_mobile,
+//                 balanceBefore: user.balance,
+//                 balanceAfter: newBalance,
+//                 amount: order.discountedPrice,
+//                 product: order.pname,
+//                 type: "refund",
+//               });
+//               await history.save();
+//             }
+//           }
+//         } else if (order_status === "completed") {
+//           // Update order status to refunded
+//           await orderModel.findOneAndUpdate(
+//             { _id: order._id },
+//             { $set: { status: "success" } }
+//           );
+//         }
+//       } catch (err) {
+//         console.error(
+//           `Error fetching order details for ${order.orderId}:`,
+//           err.message
+//         );
+//       }
+//     }
+//     console.log("Refund job completed.");
+//   } catch (err) {
+//     console.error("Error in refund job:", err.message);
+//   }
+// };
+
+
+
 // Schedule the job to run every 5 minutes
-cron.schedule("*/5 * * * *", () => {
-  checkAndProcessRefunds();
-});
+// cron.schedule("*/5 * * * *", () => {
+//   checkAndProcessRefunds();
+// });
+
+
 
 // REFUND FUNCTION
 // REFUND FUNCTION
