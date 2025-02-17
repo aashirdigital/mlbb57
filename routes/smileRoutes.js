@@ -140,7 +140,7 @@ router.get("/status", async (req, res) => {
       discount,
       region,
     } = req.query;
-    console.log(req.query)
+    
     const existingOrder = await orderModel.findOne({
       orderId: orderId
     });
@@ -155,7 +155,7 @@ router.get("/status", async (req, res) => {
         orderId: orderId,
       }
     );
-    console.log(paymentResponse.data.data)
+    
     // Check if the order ID is found
     if (paymentResponse.data.success) {
       const data = paymentResponse.data.data;

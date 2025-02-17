@@ -355,6 +355,21 @@ router.post("/create", authMiddleware, async (req, res) => {
     const pack = product.cost.filter((item) => item.prodId === prodId)[0];
     const price = user?.reseller === "yes" ? pack?.resPrice : pack?.price;
 
+    const orderData = {
+      pname: productName,
+      userId: userid,
+      zoneId: zoneid,
+      prodId: prodId,
+      inGameName: inGameName,
+      discount,
+      region: paymentNote
+    };
+
+    // Convert order data into a URL query string
+    const queryString = new URLSearchParams(orderData).toString();
+
+    const redirectUrl = `https://coinsup.in/api/moogold/status?${queryString}`;
+
     // Proceeding with the payment initiation
     const response = await axios.post(
       "https://backend.onegateway.in/payment/initiate",
@@ -367,46 +382,11 @@ router.post("/create", authMiddleware, async (req, res) => {
         customerName,
         customerEmail,
         customerNumber,
-        redirectUrl: `https://coinsup.in/api/moogold/status`,
+        redirectUrl,
       }
     );
 
     if (response.data && response.data.success) {
-      // saving order
-      const order = new orderModel({
-        api: "yes",
-        amount: pack.amount,
-        orderId: orderId,
-        pname: productName,
-        price: price,
-        customer_email: customerEmail,
-        customer_mobile: customerNumber,
-        inGameName: inGameName,
-        userId: userid,
-        zoneId: zoneid,
-        prodId: prodId,
-        discount: discount,
-        originalPrice: pack.buyingprice,
-        paymentMode: "onegateway",
-        apiName: "moogold",
-        status: "processing",
-      });
-      await order.save();
-
-      // saving payment
-      const paymentObject = {
-        name: customerName,
-        email: customerEmail,
-        mobile: customerNumber,
-        amount: price,
-        orderId: orderId,
-        pname: productName,
-        type: "order",
-        status: "pending",
-      };
-      const newPayment = new paymentModel(paymentObject);
-      await newPayment.save();
-
       return res.status(200).send({ success: true, data: response.data.data });
     } else {
       return res
@@ -420,11 +400,21 @@ router.post("/create", authMiddleware, async (req, res) => {
 });
 router.get("/status", async (req, res) => {
   try {
-    const { orderId } = req.query;
+    const {
+      orderId,
+      pname,
+      userId,
+      zoneId,
+      prodId,
+      inGameName,
+      discount,
+      region,
+    } = req.query;
+
+    console.log("query parameter", req.query)
 
     const existingOrder = await orderModel.findOne({
-      orderId: orderId,
-      status: "success",
+      orderId: orderId
     });
     if (existingOrder) {
       return res.redirect(`${process.env.BASE_URL}/failure/duplicateorder`);
@@ -438,6 +428,8 @@ router.get("/status", async (req, res) => {
       }
     );
 
+    console.log("paymentResponse", paymentResponse.data);
+    
     if (paymentResponse.data.success) {
       const data = paymentResponse.data.data;
       if (data.status === "success") {
@@ -462,26 +454,24 @@ router.get("/status", async (req, res) => {
         //   );
         // }
 
-        const updatePayment = await paymentModel.findOneAndUpdate(
-          { orderId: orderId },
-          {
-            $set: {
-              txnId: utr || "none",
-              status: "success",
-              payerUpi: payerUpi || "none",
-            },
-          },
-          { new: true }
-        );
-
-        // searching order
-        const order = await orderModel.findOne({ orderId: orderId });
-        if (!order) {
-          return res.redirect(`${process.env.BASE_URL}/failure/ordernotfound`);
-        }
+        // saving payment
+        const paymentObject = {
+          name: customerName,
+          email: customerEmail,
+          mobile: customerNumber,
+          amount: amount,
+          orderId: orderId,
+          status: "success",
+          type: "order",
+          pname: pname,
+          txnId: utr || "none",
+          payerUpi: payerUpi || "none",
+        };
+        const newPayment = new paymentModel(paymentObject);
+        await newPayment.save();
 
         // searching product
-        const prod = await productModel.findOne({ name: order.pname });
+        const prod = await productModel.findOne({ name: pname });
         if (!prod) {
           return res.redirect(
             `${process.env.BASE_URL}/failure/productnotfound`
@@ -489,7 +479,7 @@ router.get("/status", async (req, res) => {
         }
         // searching pack
         const pack = prod.cost.filter(
-          (item) => item.prodId === order.prodId
+          (item) => item.prodId === prodId
         )[0];
         if (!pack) {
           return res.redirect(`${process.env.BASE_URL}/failure/packnotfound`);
@@ -521,15 +511,29 @@ router.get("/status", async (req, res) => {
             },
           }
         );
-
+        console.log("moogold product details api", moogold.data)
         if (moogold.data.err_code) {
-          // updating order status
-          const updateOrder = await orderModel.findOneAndUpdate(
-            { orderId: orderId },
-            { $set: { status: "refunded" } },
-            { new: true }
-          );
-
+         
+          const order = new orderModel({
+            api: "yes",
+            amount: pack.amount,
+            orderId: orderId,
+            pname: pname,
+            price: amount,
+            customer_email: customerEmail,
+            customer_mobile: customerNumber,
+            inGameName: inGameName,
+            userId: userId,
+            zoneId: zoneId,
+            prodId: prodId,
+            discount: discount,
+            originalPrice: pack.buyingprice,
+            paymentMode: "onegateway",
+            apiName: "moogold",
+            status: "failed",
+          });
+          await order.save();
+          
           const err = new errModel({
             orderId: orderId,
             error: moogold.data.err_code,
@@ -537,38 +541,6 @@ router.get("/status", async (req, res) => {
           });
           await err.save();
 
-          const checkRefund = await walletHistoryModel.findOne({
-            orderId: orderId,
-            type: "refund",
-          });
-
-          // refund to user
-          if (!checkRefund) {
-            const user = await userModel.findOne({ mobile: customerNumber });
-            const newBalance = Math.max(
-              0,
-              parseFloat(user?.balance) + parseFloat(amount)
-            );
-            const updateBalance = await userModel.findOneAndUpdate(
-              { mobile: customerNumber },
-              { $set: { balance: newBalance } },
-              { new: true }
-            );
-            if (updateBalance) {
-              // saving wallet history
-              const newHistory = new walletHistoryModel({
-                orderId: orderId,
-                email: customerEmail,
-                mobile: customerNumber,
-                balanceBefore: user?.balance,
-                balanceAfter: newBalance,
-                amount: amount,
-                product: pack.amount,
-                type: "refund",
-              });
-              await newHistory.save();
-            }
-          }
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
         //? GETTING FIELDS END
@@ -585,14 +557,14 @@ router.get("/status", async (req, res) => {
 
         moogold.data.fields.forEach((field, index) => {
           if (index === 0) {
-            payload.data[field] = order.userId;
+            payload.data[field] = userId;
           } else if (index === 1) {
-            payload.data[field] = order.zoneId;
+            payload.data[field] = zoneId;
           }
         });
         // GETTING PAYLOAD END
 
-        console.log(payload);
+        console.log("payload data", payload);
 
         const timestamp = Math.floor(Date.now() / 1000);
         const path = "order/create_order";
@@ -610,15 +582,28 @@ router.get("/status", async (req, res) => {
           }
         );
 
-        console.log(response.data);
+        console.log("response data after order create api", response.data)
 
         if (response.data.err_code) {
-          // updating order status
-          const updateOrder = await orderModel.findOneAndUpdate(
-            { orderId: orderId },
-            { $set: { status: "refunded" } },
-            { new: true }
-          );
+          const order = new orderModel({
+            api: "yes",
+            amount: pack.amount,
+            orderId: orderId,
+            pname: pname,
+            price: amount,
+            customer_email: customerEmail,
+            customer_mobile: customerNumber,
+            inGameName: inGameName,
+            userId: userId,
+            zoneId: zoneId,
+            prodId: prodId,
+            discount: discount,
+            originalPrice: pack.buyingprice,
+            paymentMode: "onegateway",
+            apiName: "moogold",
+            status: "failed",
+          });
+          await order.save();
 
           const err = new errModel({
             orderId: orderId,
@@ -627,57 +612,38 @@ router.get("/status", async (req, res) => {
           });
           await err.save();
 
-          const checkRefund = await walletHistoryModel.findOne({
-            orderId: orderId,
-            type: "refund",
-          });
-
-          // refund to user
-          if (!checkRefund) {
-            const user = await userModel.findOne({ mobile: customerNumber });
-            const newBalance = Math.max(
-              0,
-              parseFloat(user?.balance) + parseFloat(amount)
-            );
-            const updateBalance = await userModel.findOneAndUpdate(
-              { mobile: customerNumber },
-              { $set: { balance: newBalance } },
-              { new: true }
-            );
-            if (updateBalance) {
-              // saving wallet history
-              const newHistory = new walletHistoryModel({
-                orderId: orderId,
-                email: customerEmail,
-                mobile: customerNumber,
-                balanceBefore: user?.balance,
-                balanceAfter: newBalance,
-                amount: amount,
-                product: pack.amount,
-                type: "refund",
-              });
-              await newHistory.save();
-            }
-          }
-
           return res.redirect(`${process.env.BASE_URL}/failure`);
         }
 
-        // updating order status
-        const updateOrder = await orderModel.findOneAndUpdate(
-          { orderId: orderId },
-          { $set: { status: "processing", mid: response.data.order_id } },
-          { new: true }
-        );
-
+        const order = new orderModel({
+          api: "yes",
+          amount: pack.amount,
+          orderId: orderId,
+          pname: pname,
+          price: amount,
+          customer_email: customerEmail,
+          customer_mobile: customerNumber,
+          inGameName: inGameName,
+          userId: userId,
+          zoneId: zoneId,
+          prodId: prodId,
+          discount: discount,
+          originalPrice: pack.buyingprice,
+          mid: response.data.order_id,
+          paymentMode: "onegateway",
+          apiName: "moogold",
+          status: "success",
+        });
+        await order.save();
+        
         try {
           const dynamicData = {
             orderId: `${orderId}`,
-            amount: `${order.amount}`,
-            price: `${order.price}`,
-            p_info: `${order.pname}`,
-            userId: `${order.userId}`,
-            zoneId: `${order.zoneId}`,
+            amount: `${pack.amount}`,
+            price: `${amount}`,
+            p_info: `${pname}`,
+            userId: `${userId}`,
+            zoneId: `${zoneId}`,
           };
           let htmlContent = fs.readFileSync("order.html", "utf8");
           Object.keys(dynamicData).forEach((key) => {
@@ -694,7 +660,7 @@ router.get("/status", async (req, res) => {
           });
           let mailDetails = {
             from: process.env.MAIL,
-            to: `${order.customer_email}`,
+            to: `${customerEmail}`,
             subject: "Order Successful!",
             html: htmlContent,
           };
